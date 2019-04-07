@@ -1,0 +1,11 @@
+opam-version: "2.0"
+version: "0.0.1"
+maintainer: "ludwig@ludwig.cc"
+authors: ["ludwigpacifici"]
+homepage: "https://github.com/ludwigpacifici/saumon"
+bug-reports: "https://github.com/ludwigpacifici/saumon/issues"
+dev-repo: "git+https://github.com/ludwigpacifici/saumon.git"
+license: "GNU GENERAL PUBLIC LICENSE Version 3"
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]
