@@ -8,13 +8,6 @@ let make () = {line = 1; column = 0; errored = false}
 
 open Base
 
-let take_while pred =
-  let rec aux acc = function
-    | c :: tl when pred c -> aux (c :: acc) tl
-    | tl -> (List.rev acc, tl)
-  in
-  aux []
-
 let is_word_end = function
   | [] -> true
   | c :: _ when Char.is_alphanum c -> false
@@ -72,7 +65,7 @@ let rec loop scanner tokens = function
         tl
   | '/' :: '/' :: tl ->
       (* Discard data up to the end of the line or EOF *)
-      let _, tl = take_while (fun c -> Char.compare '\n' c <> 0) tl in
+      let _, tl = List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl in
       let scanner =
         if List.is_empty tl then scanner
         else {scanner with line = scanner.line + 1; column = 0}
@@ -213,7 +206,7 @@ let rec loop scanner tokens = function
   | c :: tl when Char.is_whitespace c ->
       loop {scanner with column = scanner.column + 1} tokens tl
   | c :: _ as tl when Char.is_alpha c ->
-      let identifier, tl = take_while Char.is_alphanum tl in
+      let identifier, tl = List.split_while ~f:Char.is_alphanum tl in
       let identifier = String.of_char_list identifier in
       loop
         {scanner with column = scanner.column + String.length identifier}
@@ -221,7 +214,9 @@ let rec loop scanner tokens = function
         tl
   | c :: tl when Char.equal '"' c ->
       (* Note the first '"' is discarded *)
-      let str, tl = take_while (fun c -> Char.compare '"' c <> 0) tl in
+      let str, tl =
+        List.split_while ~f:(fun c -> Char.compare '"' c <> 0) tl
+      in
       let str = String.of_char_list str in
       loop
         (* Take into consideration the two '"' *)
@@ -231,7 +226,7 @@ let rec loop scanner tokens = function
         (match tl with [] -> [] | _ :: tl -> tl)
   | c :: _ as tl when Char.is_digit c -> (
       let number, tl =
-        take_while (fun c -> Char.is_digit c || Char.equal '.' c) tl
+        List.split_while ~f:(fun c -> Char.is_digit c || Char.equal '.' c) tl
       in
       let len = List.length number in
       let number =
