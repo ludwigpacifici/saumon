@@ -11,6 +11,12 @@ dune build @install
 dune exec saumon
 ```
 
+## Tests
+
+```bash
+dune runtest
+```
+
 ## Acknowledgments
 
 1. Designed by Bob Nystrom, [A handbook for making programming languages](http://www.craftinginterpreters.com/).

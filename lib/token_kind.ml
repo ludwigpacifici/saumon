@@ -38,7 +38,7 @@ type t =
   | True
   | Var
   | While
-[@@deriving show]
+[@@deriving show, eq]
 
 let to_string = function
   | And -> "and"
