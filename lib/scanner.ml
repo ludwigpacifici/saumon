@@ -7,7 +7,6 @@ type t =
 let make () = {line = 1; column = 0; errored = false}
 
 open Base
-open Omnipresent
 
 let is_word_end = function
   | [] -> true
@@ -16,8 +15,6 @@ let is_word_end = function
 
 let add_token tokens kind line column =
   Token.make ~kind ~line ~column :: tokens
-
-let token_length = Token_kind.to_string >> String.length
 
 let rec loop scanner tokens = function
   | [] -> (add_token tokens Eof scanner.line scanner.column, scanner.errored)
@@ -124,82 +121,82 @@ let rec loop scanner tokens = function
         tl
   | 'a' :: 'n' :: 'd' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length And}
+        {scanner with column = scanner.column + 3}
         (add_token tokens And scanner.line scanner.column)
         tl
   | 'c' :: 'l' :: 'a' :: 's' :: 's' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Class}
+        {scanner with column = scanner.column + 5}
         (add_token tokens Class scanner.line scanner.column)
         tl
   | 'e' :: 'l' :: 's' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Else}
+        {scanner with column = scanner.column + 4}
         (add_token tokens Else scanner.line scanner.column)
         tl
   | 'f' :: 'a' :: 'l' :: 's' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length False}
+        {scanner with column = scanner.column + 5}
         (add_token tokens False scanner.line scanner.column)
         tl
   | 'f' :: 'u' :: 'n' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Fun}
+        {scanner with column = scanner.column + 3}
         (add_token tokens Fun scanner.line scanner.column)
         tl
   | 'f' :: 'o' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length For}
+        {scanner with column = scanner.column + 3}
         (add_token tokens For scanner.line scanner.column)
         tl
   | 'i' :: 'f' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length If}
+        {scanner with column = scanner.column + 2}
         (add_token tokens If scanner.line scanner.column)
         tl
   | 'n' :: 'i' :: 'l' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Nil}
+        {scanner with column = scanner.column + 3}
         (add_token tokens Nil scanner.line scanner.column)
         tl
   | 'o' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Or}
+        {scanner with column = scanner.column + 2}
         (add_token tokens Or scanner.line scanner.column)
         tl
   | 'p' :: 'r' :: 'i' :: 'n' :: 't' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Print}
+        {scanner with column = scanner.column + 5}
         (add_token tokens Print scanner.line scanner.column)
         tl
   | 'r' :: 'e' :: 't' :: 'u' :: 'r' :: 'n' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Return}
+        {scanner with column = scanner.column + 6}
         (add_token tokens Return scanner.line scanner.column)
         tl
   | 's' :: 'u' :: 'p' :: 'e' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Super}
+        {scanner with column = scanner.column + 5}
         (add_token tokens Super scanner.line scanner.column)
         tl
   | 't' :: 'h' :: 'i' :: 's' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length This}
+        {scanner with column = scanner.column + 4}
         (add_token tokens This scanner.line scanner.column)
         tl
   | 't' :: 'r' :: 'u' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length True}
+        {scanner with column = scanner.column + 4}
         (add_token tokens True scanner.line scanner.column)
         tl
   | 'v' :: 'a' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length Var}
+        {scanner with column = scanner.column + 3}
         (add_token tokens Var scanner.line scanner.column)
         tl
   | 'w' :: 'h' :: 'i' :: 'l' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with column = scanner.column + token_length While}
+        {scanner with column = scanner.column + 5}
         (add_token tokens While scanner.line scanner.column)
         tl
   | '\n' :: tl ->

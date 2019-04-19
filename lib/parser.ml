@@ -8,7 +8,7 @@ let primary = function
   | {kind = Token_kind.False; _} :: ts -> (Ast.Literal (Ast.Bool false), ts)
   | {kind = Token_kind.Nil; _} :: ts -> (Ast.Literal Ast.Nil, ts)
   | {kind = k; _} :: _ ->
-      failwith ("Unsupported token_kind" ^ Token_kind.to_string k)
+      failwith ("Unsupported token_kind: " ^ Token_kind.show k)
   | [] -> failwith "Empty token list"
 
 let rec unary = function
