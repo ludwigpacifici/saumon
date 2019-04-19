@@ -4,4 +4,5 @@ type t =
   ; column : int }
 [@@deriving show, make, eq]
 
-let of_token_kind ~kind = {kind; line = 0; column = 0}
+let of_token_kind ~kind =
+  {kind; line = 1 (* Line starts at 1*); column = 0 (* Column starts at 1*)}

@@ -66,14 +66,12 @@ let rec loop scanner tokens = function
         {scanner with column = scanner.column + 1}
         (add_token tokens Semicolon scanner.line scanner.column)
         tl
-  | '/' :: '/' :: tl ->
-      (* Discard data up to the end of the line or EOF *)
-      let _, tl = List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl in
-      let scanner =
-        if List.is_empty tl then scanner
-        else {scanner with line = scanner.line + 1; column = 0}
-      in
-      loop scanner (add_token tokens Bang_equal scanner.line scanner.column) tl
+  | '/' :: '/' :: tl -> (
+    (* Discard data up to the end of the line or EOF *)
+    match List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl with
+    | _, [] -> loop scanner tokens tl
+    | _, _ -> loop {scanner with line = scanner.line + 1; column = 0} tokens tl
+    )
   | '/' :: tl ->
       loop
         {scanner with column = scanner.column + 1}

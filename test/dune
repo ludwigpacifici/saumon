@@ -1,3 +1,3 @@
 (test
- (name parser_tests)
+ (name unit_tests)
  (libraries saumon oUnit))
