@@ -1,1 +1,1 @@
-val error : line:int -> where:string -> message:string -> unit
+val error : Location.t -> where:string -> message:string -> unit

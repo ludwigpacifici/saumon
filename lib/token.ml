@@ -1,8 +1,6 @@
 type t =
   { kind : Token_kind.t
-  ; line : int
-  ; column : int }
+  ; location : Location.t }
 [@@deriving show, make, eq]
 
-let of_token_kind ~kind =
-  {kind; line = 1 (* Line starts at 1*); column = 0 (* Column starts at 1*)}
+let of_token_kind ~kind = {kind; location = Location.start ()}

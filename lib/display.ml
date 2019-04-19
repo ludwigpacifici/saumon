@@ -1,6 +1,6 @@
 open Core
 
-let error ~line ~where ~message =
+let error location ~where ~message =
   "error: " ^ message |> Out_channel.print_endline ;
-  "-> line:" ^ Int.to_string line ^ ", where: " ^ where
+  "-> " ^ Location.show_compact location ^ " where: " ^ where
   |> Out_channel.print_endline
