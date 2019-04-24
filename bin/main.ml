@@ -5,9 +5,14 @@ let usage exe_name = "Usage: " ^ exe_name ^ " [file]"
 
 let run data =
   let open Saumon in
-  let tokens, errored = Scanner.scan_tokens data in
-  List.iter tokens ~f:(Token.show >> Out_channel.print_endline) ;
-  errored
+  match Scanner.scan_tokens data with
+  | Ok tokens ->
+      List.iter tokens ~f:(Token.show >> Out_channel.print_endline) ;
+      false
+  | Error errors ->
+      List.iter errors ~f:(fun x ->
+          Display.error x.location ~where:x.where ~message:x.message ) ;
+      true
 
 let run_file ~file = file |> In_channel.read_all |> run
 

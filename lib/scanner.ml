@@ -1,220 +1,212 @@
-type t =
-  { location : Location.t
-  ; errored : bool }
-[@@deriving show]
-
-let make () = {location = Location.start (); errored = false}
-
 open Base
+
+type error =
+  { location : Location.t
+  ; where : string
+  ; message : string }
 
 let is_word_end = function
   | [] -> true
   | c :: _ when Char.is_alphanum c -> false
   | _ -> true
 
-let add_token tokens kind location = Token.make ~kind ~location :: tokens
+let make_add_token kind location tokens = Token.make ~kind ~location :: tokens
 
-let rec loop scanner tokens = function
-  | [] -> (add_token tokens Eof scanner.location, scanner.errored)
+let rec loop location tokens = function
+  | [] ->
+      tokens
+      |> Result.map ~f:(make_add_token Eof location)
+      |> Result.map ~f:List.rev
+      |> Result.map_error ~f:List.rev
   | '(' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Left_paren scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Left_paren location))
         tl
   | ')' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Right_paren scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Right_paren location))
         tl
   | '{' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Left_brace scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Left_brace location))
         tl
   | '}' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Right_brace scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Right_brace location))
         tl
   | ',' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Comma scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Comma location))
         tl
   | '.' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Dot scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Dot location))
         tl
   | '-' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Minus scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Minus location))
         tl
   | '+' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Plus scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Plus location))
         tl
   | ';' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Semicolon scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Semicolon location))
         tl
   | '/' :: '/' :: tl -> (
     (* Discard data up to the end of the line or EOF *)
     match List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl with
-    | _, [] -> loop scanner tokens tl
-    | _, _ ->
-        loop
-          {scanner with location = Location.next_line scanner.location}
-          tokens tl )
+    | _, [] -> loop location tokens tl
+    | _, _ -> loop (Location.next_line location) tokens tl )
   | '/' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Slash scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Slash location))
         tl
   | '*' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Star scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Star location))
         tl
   | '!' :: '=' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 2}
-        (add_token tokens Bang_equal scanner.location)
+        (Location.next_column location 2)
+        (Result.map tokens ~f:(make_add_token Bang_equal location))
         tl
   | '!' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Bang scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Bang location))
         tl
   | '=' :: '=' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 2}
-        (add_token tokens Equal_equal scanner.location)
+        (Location.next_column location 2)
+        (Result.map tokens ~f:(make_add_token Equal_equal location))
         tl
   | '=' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Equal scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Equal location))
         tl
   | '<' :: '=' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 2}
-        (add_token tokens Greater_equal scanner.location)
+        (Location.next_column location 2)
+        (Result.map tokens ~f:(make_add_token Greater_equal location))
         tl
   | '<' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Greater scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Greater location))
         tl
   | '>' :: '=' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 2}
-        (add_token tokens Less_equal scanner.location)
+        (Location.next_column location 2)
+        (Result.map tokens ~f:(make_add_token Less_equal location))
         tl
   | '>' :: tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 1}
-        (add_token tokens Less scanner.location)
+        (Location.next_column location 1)
+        (Result.map tokens ~f:(make_add_token Less location))
         tl
   | 'a' :: 'n' :: 'd' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 3}
-        (add_token tokens And scanner.location)
+        (Location.next_column location 3)
+        (Result.map tokens ~f:(make_add_token And location))
         tl
   | 'c' :: 'l' :: 'a' :: 's' :: 's' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 5}
-        (add_token tokens Class scanner.location)
+        (Location.next_column location 5)
+        (Result.map tokens ~f:(make_add_token Class location))
         tl
   | 'e' :: 'l' :: 's' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 4}
-        (add_token tokens Else scanner.location)
+        (Location.next_column location 4)
+        (Result.map tokens ~f:(make_add_token Else location))
         tl
   | 'f' :: 'a' :: 'l' :: 's' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 5}
-        (add_token tokens False scanner.location)
+        (Location.next_column location 5)
+        (Result.map tokens ~f:(make_add_token False location))
         tl
   | 'f' :: 'u' :: 'n' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 3}
-        (add_token tokens Fun scanner.location)
+        (Location.next_column location 3)
+        (Result.map tokens ~f:(make_add_token Fun location))
         tl
   | 'f' :: 'o' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 3}
-        (add_token tokens For scanner.location)
+        (Location.next_column location 3)
+        (Result.map tokens ~f:(make_add_token For location))
         tl
   | 'i' :: 'f' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 2}
-        (add_token tokens If scanner.location)
+        (Location.next_column location 2)
+        (Result.map tokens ~f:(make_add_token If location))
         tl
   | 'n' :: 'i' :: 'l' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 3}
-        (add_token tokens Nil scanner.location)
+        (Location.next_column location 3)
+        (Result.map tokens ~f:(make_add_token Nil location))
         tl
   | 'o' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 2}
-        (add_token tokens Or scanner.location)
+        (Location.next_column location 2)
+        (Result.map tokens ~f:(make_add_token Or location))
         tl
   | 'p' :: 'r' :: 'i' :: 'n' :: 't' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 5}
-        (add_token tokens Print scanner.location)
+        (Location.next_column location 5)
+        (Result.map tokens ~f:(make_add_token Print location))
         tl
   | 'r' :: 'e' :: 't' :: 'u' :: 'r' :: 'n' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 6}
-        (add_token tokens Return scanner.location)
+        (Location.next_column location 6)
+        (Result.map tokens ~f:(make_add_token Return location))
         tl
   | 's' :: 'u' :: 'p' :: 'e' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 5}
-        (add_token tokens Super scanner.location)
+        (Location.next_column location 5)
+        (Result.map tokens ~f:(make_add_token Super location))
         tl
   | 't' :: 'h' :: 'i' :: 's' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 4}
-        (add_token tokens This scanner.location)
+        (Location.next_column location 4)
+        (Result.map tokens ~f:(make_add_token This location))
         tl
   | 't' :: 'r' :: 'u' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 4}
-        (add_token tokens True scanner.location)
+        (Location.next_column location 4)
+        (Result.map tokens ~f:(make_add_token True location))
         tl
   | 'v' :: 'a' :: 'r' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 3}
-        (add_token tokens Var scanner.location)
+        (Location.next_column location 3)
+        (Result.map tokens ~f:(make_add_token Var location))
         tl
   | 'w' :: 'h' :: 'i' :: 'l' :: 'e' :: tl when is_word_end tl ->
       loop
-        {scanner with location = Location.next_column scanner.location 5}
-        (add_token tokens While scanner.location)
+        (Location.next_column location 5)
+        (Result.map tokens ~f:(make_add_token While location))
         tl
-  | '\n' :: tl ->
-      loop
-        {scanner with location = Location.next_line scanner.location}
-        tokens tl
+  | '\n' :: tl -> loop (Location.next_line location) tokens tl
   | c :: tl when Char.is_whitespace c ->
-      loop
-        {scanner with location = Location.next_column scanner.location 1}
-        tokens tl
+      loop (Location.next_column location 1) tokens tl
   | c :: _ as tl when Char.is_alpha c ->
       let identifier, tl = List.split_while ~f:Char.is_alphanum tl in
       let identifier = String.of_char_list identifier in
       loop
-        { scanner with
-          location =
-            Location.next_column scanner.location (String.length identifier) }
-        (add_token tokens (Identifier identifier) scanner.location)
+        (Location.next_column location (String.length identifier))
+        (Result.map tokens ~f:(make_add_token (Identifier identifier) location))
         tl
   | c :: tl when Char.equal '"' c ->
       (* Note the first '"' is discarded *)
@@ -224,40 +216,37 @@ let rec loop scanner tokens = function
       let str = String.of_char_list str in
       loop
         (* Take into consideration the two '"' *)
-        { scanner with
-          location =
-            Location.next_column scanner.location (String.length str + 2) }
-        (add_token tokens (String str) scanner.location)
+        (Location.next_column location (String.length str + 2))
+        (Result.map tokens ~f:(make_add_token (String str) location))
         (* Discard the 2nd '"' *)
         (match tl with [] -> [] | _ :: tl -> tl)
-  | c :: _ as tl when Char.is_digit c -> (
-      let number, tl =
+  | c :: _ as tl when Char.is_digit c ->
+      let raw_number, tl =
         List.split_while ~f:(fun c -> Char.is_digit c || Char.equal '.' c) tl
       in
-      let len = List.length number in
-      let number =
-        try number |> String.of_char_list |> Float.of_string |> Option.some
-        with _ -> None
+      let raw_number = String.of_char_list raw_number in
+      let len = String.length raw_number in
+      let token =
+        ( try Ok (Float.of_string raw_number)
+          with _ ->
+            Error
+              [ { location
+                ; where = raw_number
+                ; message = "Expected to parse a float." } ] )
+        |> Result.map ~f:(fun n ->
+               Token.make ~kind:(Token_kind.Number n) ~location )
       in
-      match number with
-      | Some n ->
-          loop
-            {scanner with location = Location.next_column scanner.location len}
-            (add_token tokens (Number n) scanner.location)
-            tl
-      | None ->
-          loop
-            { location = Location.next_column scanner.location len
-            ; errored = true }
-            tokens tl )
-  | c :: tl ->
-      Display.error scanner.location ~where:(String.of_char c)
-        ~message:"Unknown input" ;
       loop
-        {location = Location.next_column scanner.location 1; errored = true}
-        tokens tl
+        (Location.next_column location len)
+        (Result.combine token tokens ~ok:List.cons ~err:List.append)
+        tl
+  | c :: tl ->
+      let err =
+        Error [{location; where = String.of_char c; message = "Unknown input"}]
+      in
+      loop
+        (Location.next_column location 1)
+        (Result.combine err tokens ~ok:List.cons ~err:List.append)
+        tl
 
-let scan_tokens code =
-  let scanner = make () in
-  let tokens, errored = loop scanner [] (String.to_list code) in
-  (List.rev tokens, errored)
+let scan_tokens code = loop (Location.start ()) (Ok []) (String.to_list code)
