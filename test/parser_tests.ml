@@ -22,6 +22,12 @@ let expression_is_nil () =
   Parser.parse [Token.of_token_kind ~kind:Token_kind.Nil]
   === Ast.Literal Ast.Nil
 
+let expression_is_grouping () =
+  let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
+  let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
+  Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True; right]
+  === Ast.Grouping (left, Ast.Literal (Ast.Bool true), right)
+
 let expression_is_bang_unary () =
   let bang = Token.of_token_kind ~kind:Token_kind.Bang in
   Parser.parse [bang; Token.of_token_kind ~kind:Token_kind.True]
@@ -116,6 +122,7 @@ let parser_tests =
   ; ("Expression is true bool" >:: fun _ -> expression_is_true_bool ())
   ; ("Expression is false bool" >:: fun _ -> expression_is_false_bool ())
   ; ("Expression is nil" >:: fun _ -> expression_is_nil ())
+  ; ("Expression is grouping" >:: fun _ -> expression_is_grouping ())
   ; ("Expression is bang unary" >:: fun _ -> expression_is_bang_unary ())
   ; ("Expression is minus number" >:: fun _ -> expression_is_minus_number 42.)
   ; ( "Multiplication of two numbers"

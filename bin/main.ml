@@ -7,7 +7,11 @@ let run data =
   let open Saumon in
   match Scanner.scan_tokens data with
   | Ok tokens ->
+      Out_channel.print_endline "[SCANNER]" ;
       List.iter tokens ~f:(Token.show >> Out_channel.print_endline) ;
+      Out_channel.print_endline "[PARSER]" ;
+      let expression = Parser.parse tokens in
+      Out_channel.print_endline (Ast.show_expression expression) ;
       false
   | Error errors ->
       List.iter errors ~f:(fun x ->
