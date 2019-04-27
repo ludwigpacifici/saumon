@@ -10,8 +10,14 @@ let run data =
       Out_channel.print_endline "[SCANNER]" ;
       List.iter tokens ~f:(Token.show >> Out_channel.print_endline) ;
       Out_channel.print_endline "[PARSER]" ;
-      let expression = Parser.parse tokens in
-      Out_channel.print_endline (Ast.show_expression expression) ;
+      ( match Parser.parse tokens with
+      | Ok e -> Ast.show_expression e |> Out_channel.print_endline
+      | Error (errs, t) ->
+          List.iter errs ~f:Out_channel.print_endline ;
+          let t =
+            Option.map t ~f:Token.show |> Option.value ~default:"<None>"
+          in
+          Out_channel.print_endline ("Token: " ^ t) ) ;
       false
   | Error errors ->
       List.iter errors ~f:(fun x ->

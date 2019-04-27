@@ -4,39 +4,60 @@ open Saumon
 
 let expression_is_number inner =
   Parser.parse [Token.of_token_kind ~kind:(Token_kind.Number inner)]
-  === Ast.Literal (Ast.Number inner)
+  === Ok (Ast.Literal (Ast.Number inner))
 
 let expression_is_string inner =
   Parser.parse [Token.of_token_kind ~kind:(Token_kind.String inner)]
-  === Ast.Literal (Ast.String inner)
+  === Ok (Ast.Literal (Ast.String inner))
 
 let expression_is_true_bool () =
   Parser.parse [Token.of_token_kind ~kind:Token_kind.True]
-  === Ast.Literal (Ast.Bool true)
+  === Ok (Ast.Literal (Ast.Bool true))
 
 let expression_is_false_bool () =
   Parser.parse [Token.of_token_kind ~kind:Token_kind.False]
-  === Ast.Literal (Ast.Bool false)
+  === Ok (Ast.Literal (Ast.Bool false))
 
 let expression_is_nil () =
   Parser.parse [Token.of_token_kind ~kind:Token_kind.Nil]
-  === Ast.Literal Ast.Nil
+  === Ok (Ast.Literal Ast.Nil)
 
 let expression_is_grouping () =
   let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
   let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
   Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True; right]
-  === Ast.Grouping (left, Ast.Literal (Ast.Bool true), right)
+  === Ok (Ast.Grouping (left, Ast.Literal (Ast.Bool true), right))
+
+let expression_grouping_bad_closed_paren () =
+  let open Base in
+  let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
+  Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True; left]
+  |> Result.is_error === true
+
+let expression_grouping_missing_closed_paren () =
+  let open Base in
+  let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
+  Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True]
+  |> Result.is_error === true
+
+let expression_is_illegal () =
+  let open Base in
+  Parser.parse [Token.of_token_kind ~kind:Token_kind.Return]
+  |> Result.is_error === true
+
+let expression_is_empty () =
+  let open Base in
+  Parser.parse [] |> Result.is_error === true
 
 let expression_is_bang_unary () =
   let bang = Token.of_token_kind ~kind:Token_kind.Bang in
   Parser.parse [bang; Token.of_token_kind ~kind:Token_kind.True]
-  === Ast.Unary (bang, Ast.Literal (Ast.Bool true))
+  === Ok (Ast.Unary (bang, Ast.Literal (Ast.Bool true)))
 
 let expression_is_minus_number n =
   let minus = Token.of_token_kind ~kind:Token_kind.Minus in
   Parser.parse [minus; Token.of_token_kind ~kind:(Token_kind.Number n)]
-  === Ast.Unary (minus, Ast.Literal (Ast.Number n))
+  === Ok (Ast.Unary (minus, Ast.Literal (Ast.Number n)))
 
 let multiplication_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Star in
@@ -44,7 +65,9 @@ let multiplication_of_two_numbers n =
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
     ; infix
     ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
-  === Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  === Ok
+        (Ast.Binary
+           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
 
 let division_of_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Slash in
@@ -53,7 +76,7 @@ let division_of_three_numbers () =
   let expect =
     Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
   in
-  let expect = Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.)) in
+  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
   actual === expect
 
 let addition_of_two_numbers n =
@@ -62,7 +85,9 @@ let addition_of_two_numbers n =
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
     ; infix
     ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
-  === Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  === Ok
+        (Ast.Binary
+           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
 
 let substract_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Minus in
@@ -71,7 +96,7 @@ let substract_three_numbers () =
   let expect =
     Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
   in
-  let expect = Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.)) in
+  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
   actual === expect
 
 let addition_tests =
@@ -80,12 +105,13 @@ let addition_tests =
 
 let comparison_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Greater in
-  assert_equal
-    (Parser.parse
-       [ Token.of_token_kind ~kind:(Token_kind.Number n)
-       ; infix
-       ; Token.of_token_kind ~kind:(Token_kind.Number n) ])
-    (Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
+  Parser.parse
+    [ Token.of_token_kind ~kind:(Token_kind.Number n)
+    ; infix
+    ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
+  === Ok
+        (Ast.Binary
+           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
 
 let comparison_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Less_equal in
@@ -94,17 +120,18 @@ let comparison_three_numbers () =
   let expect =
     Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
   in
-  let expect = Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.)) in
-  assert_equal actual expect
+  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
+  actual === expect
 
 let equality_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Equal_equal in
-  assert_equal
-    (Parser.parse
-       [ Token.of_token_kind ~kind:(Token_kind.Number n)
-       ; infix
-       ; Token.of_token_kind ~kind:(Token_kind.Number n) ])
-    (Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
+  Parser.parse
+    [ Token.of_token_kind ~kind:(Token_kind.Number n)
+    ; infix
+    ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
+  === Ok
+        (Ast.Binary
+           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
 
 let equality_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Bang_equal in
@@ -113,8 +140,8 @@ let equality_three_numbers () =
   let expect =
     Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
   in
-  let expect = Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.)) in
-  assert_equal actual expect
+  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
+  actual === expect
 
 let parser_tests =
   [ ("Expression is number" >:: fun _ -> expression_is_number 42.)
@@ -123,6 +150,12 @@ let parser_tests =
   ; ("Expression is false bool" >:: fun _ -> expression_is_false_bool ())
   ; ("Expression is nil" >:: fun _ -> expression_is_nil ())
   ; ("Expression is grouping" >:: fun _ -> expression_is_grouping ())
+  ; ( "Expression grouping bad closed paren"
+    >:: fun _ -> expression_grouping_bad_closed_paren () )
+  ; ( "Expression grouping missing closed paren"
+    >:: fun _ -> expression_grouping_missing_closed_paren () )
+  ; ("Expression is illegal" >:: fun _ -> expression_is_illegal ())
+  ; ("Expression is empty" >:: fun _ -> expression_is_empty ())
   ; ("Expression is bang unary" >:: fun _ -> expression_is_bang_unary ())
   ; ("Expression is minus number" >:: fun _ -> expression_is_minus_number 42.)
   ; ( "Multiplication of two numbers"
