@@ -7,14 +7,28 @@ Lox language implemented in [OCaml](https://ocaml.org/).
 With [Dune](https://dune.build/):
 
 ```bash
-dune build @install
-dune exec saumon
+$ dune build @install
+$ dune exec saumon
 ```
 
 ## Tests
 
 ```bash
-dune runtest
+$ dune runtest
+```
+
+## Usage
+
+To use saumon in interactive mode, simply run
+
+```bash
+$ saumon
+```
+
+With Dune:
+
+```bash
+$ dune exec saumon
 ```
 
 ## Acknowledgments
