@@ -1,0 +1,137 @@
+open OUnit2
+open Test_utils
+open Saumon
+
+let evaluate_literal () =
+  Interpreter.evaluate (Ast.Literal (Ast.Number 42.)) === Value.Number 42. ;
+  Interpreter.evaluate (Ast.Literal (Ast.String "hello"))
+  === Value.String "hello" ;
+  Interpreter.evaluate (Ast.Literal (Ast.Bool true)) === Value.Bool true ;
+  Interpreter.evaluate (Ast.Literal (Ast.Bool false)) === Value.Bool false ;
+  Interpreter.evaluate (Ast.Literal Ast.Nil) === Value.Nil
+
+let evaluate_grouping () =
+  let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
+  let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
+  Interpreter.evaluate
+    (Ast.Grouping (left, Ast.Literal (Ast.Number 42.), right))
+  === Value.Number 42.
+
+let evaluate_unary () =
+  Interpreter.evaluate
+    (Ast.Unary
+       ( Token.of_token_kind ~kind:Token_kind.Minus
+       , Ast.Literal (Ast.Number 42.) ))
+  === Value.Number (-42.) ;
+  Interpreter.evaluate
+    (Ast.Unary
+       (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal (Ast.Number 42.)))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Unary
+       (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal (Ast.Bool false)))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Unary (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal Ast.Nil))
+  === Value.Bool true
+
+let evaluate_binary () =
+  let n1 = 2. in
+  let n2 = 1. in
+  let n1_ast = Ast.Literal (Ast.Number n1) in
+  let n2_ast = Ast.Literal (Ast.Number n2) in
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Plus, n2_ast))
+  === Value.Number (n1 +. n2) ;
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Minus, n2_ast))
+  === Value.Number (n1 -. n2) ;
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Star, n2_ast))
+  === Value.Number (n1 *. n2) ;
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Slash, n2_ast))
+  === Value.Number (n1 /. n2) ;
+  let str1 = "hello" in
+  let str2 = "world" in
+  let str1_ast = Ast.Literal (Ast.String str1) in
+  let str2_ast = Ast.Literal (Ast.String str2) in
+  Interpreter.evaluate
+    (Ast.Binary (str1_ast, Token.of_token_kind ~kind:Token_kind.Plus, str2_ast))
+  === Value.String (str1 ^ str2) ;
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater_equal, n2_ast))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Less, n2_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Less_equal, n2_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, n1_ast))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, str1_ast))
+  === Value.Bool true ;
+  let t_ast = Ast.Literal (Ast.Bool true) in
+  Interpreter.evaluate
+    (Ast.Binary (t_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast))
+  === Value.Bool true ;
+  let f_ast = Ast.Literal (Ast.Bool false) in
+  Interpreter.evaluate
+    (Ast.Binary (f_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, f_ast))
+  === Value.Bool true ;
+  let nil_ast = Ast.Literal Ast.Nil in
+  Interpreter.evaluate
+    (Ast.Binary
+       (nil_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, str1_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (t_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast))
+  === Value.Bool false ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, n2_ast))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (str1_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, str2_ast))
+  === Value.Bool true ;
+  Interpreter.evaluate
+    (Ast.Binary (t_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, f_ast))
+  === Value.Bool true
+
+let interpreter_tests =
+  [ ("Evaluate literal" >:: fun _ -> evaluate_literal ())
+  ; ("Evaluate grouping" >:: fun _ -> evaluate_grouping ())
+  ; ("Evaluate unary" >:: fun _ -> evaluate_unary ())
+  ; ("Evaluate binary" >:: fun _ -> evaluate_binary ()) ]
