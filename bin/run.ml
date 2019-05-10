@@ -23,9 +23,9 @@ let print_parser_errors (errs, t) =
   let t = Option.map t ~f:Token.show |> Option.value ~default:"<None>" in
   Out_channel.print_endline ("Token: " ^ t)
 
-let print_interpreter_errors err =
+let print_interpreter_errors (err : Interpreter.error) =
   Out_channel.print_endline "[INTERPRETER]" ;
-  Interpreter.show_error err |> Out_channel.print_endline
+  Display.error err.location ~where:err.where ~message:err.message
 
 let start args data =
   Scanner.scan_tokens data

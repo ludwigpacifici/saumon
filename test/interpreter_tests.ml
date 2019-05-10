@@ -1,3 +1,4 @@
+open Base
 open OUnit2
 open Test_utils
 open Saumon
@@ -25,6 +26,11 @@ let evaluate_unary () =
   === Ok (Value.Number (-42.)) ;
   Interpreter.evaluate
     (Ast.Unary
+       ( Token.of_token_kind ~kind:Token_kind.Minus
+       , Ast.Literal (Ast.String "42.") ))
+  |> Result.is_error === true ;
+  Interpreter.evaluate
+    (Ast.Unary
        (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal (Ast.Number 42.)))
   === Ok (Value.Bool false) ;
   Interpreter.evaluate
@@ -33,7 +39,11 @@ let evaluate_unary () =
   === Ok (Value.Bool true) ;
   Interpreter.evaluate
     (Ast.Unary (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal Ast.Nil))
-  === Ok (Value.Bool true)
+  === Ok (Value.Bool true) ;
+  Interpreter.evaluate
+    (Ast.Unary
+       (Token.of_token_kind ~kind:Token_kind.Plus, Ast.Literal (Ast.Number 42.)))
+  |> Result.is_error === true
 
 let evaluate_binary () =
   let n1 = 2. in
@@ -52,6 +62,9 @@ let evaluate_binary () =
   Interpreter.evaluate
     (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Slash, n2_ast))
   === Ok (Value.Number (n1 /. n2)) ;
+  Interpreter.evaluate
+    (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Bang, n2_ast))
+  |> Result.is_error === true ;
   let str1 = "hello" in
   let str2 = "world" in
   let str1_ast = Ast.Literal (Ast.String str1) in
@@ -59,6 +72,9 @@ let evaluate_binary () =
   Interpreter.evaluate
     (Ast.Binary (str1_ast, Token.of_token_kind ~kind:Token_kind.Plus, str2_ast))
   === Ok (Value.String (str1 ^ str2)) ;
+  Interpreter.evaluate
+    (Ast.Binary (str1_ast, Token.of_token_kind ~kind:Token_kind.Bang, str2_ast))
+  |> Result.is_error === true ;
   Interpreter.evaluate
     (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast))
   === Ok (Value.Bool true) ;
@@ -128,7 +144,26 @@ let evaluate_binary () =
   === Ok (Value.Bool true) ;
   Interpreter.evaluate
     (Ast.Binary (t_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, f_ast))
-  === Ok (Value.Bool true)
+  === Ok (Value.Bool true) ;
+  let bad_expression =
+    Ast.Unary
+      ( Token.of_token_kind ~kind:Token_kind.Minus
+      , Ast.Literal (Ast.String "42.") )
+  in
+  Interpreter.evaluate
+    (Ast.Binary
+       (bad_expression, Token.of_token_kind ~kind:Token_kind.Plus, n2_ast))
+  |> Result.is_error === true ;
+  Interpreter.evaluate
+    (Ast.Binary
+       (n1_ast, Token.of_token_kind ~kind:Token_kind.Plus, bad_expression))
+  |> Result.is_error === true ;
+  Interpreter.evaluate
+    (Ast.Binary
+       ( bad_expression
+       , Token.of_token_kind ~kind:Token_kind.Plus
+       , bad_expression ))
+  |> Result.is_error === true
 
 let interpreter_tests =
   [ ("Evaluate literal" >:: fun _ -> evaluate_literal ())
