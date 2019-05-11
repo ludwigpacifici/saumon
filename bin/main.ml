@@ -1,24 +1,14 @@
 open Core
 open Saumon.Omnipresent
 
-type exit_code =
-  | Success
-  | LexerError
-[@@deriving enum]
-
-let show_exit_code = function
-  | Success as exit_code -> exit_code |> exit_code_to_enum |> exit
-  | exit_code ->
-      let exit_code = exit_code |> exit_code_to_enum |> Int.to_string in
-      "Exited with code: " ^ exit_code |> print_endline
-
 type input_mode =
   | Script
   | Repl
 
-let main_exn exe_name args in_channel = function
-  | Repl -> if Repl.run exe_name args in_channel then LexerError else Success
-  | Script -> if Script.run args in_channel then LexerError else Success
+let main_exn exe_name args in_channel input_mode : int =
+  match input_mode with
+  | Repl -> Repl.run exe_name args in_channel
+  | Script -> Script.run args in_channel
 
 let resolve_in_channel = function
   | "-" -> (In_channel.stdin, Repl)
@@ -37,8 +27,7 @@ let command exe_name =
       in
       fun () ->
         let args : Run.args = {print_scanner; print_parser} in
-        resolve_in_channel filename
-        ||> main_exn exe_name args |> show_exit_code)
+        resolve_in_channel filename ||> main_exn exe_name args |> exit)
 
 let () =
   let exe_name = Filename.basename Sys.argv.(0) in

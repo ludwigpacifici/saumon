@@ -20,7 +20,8 @@ let run exe_name args in_channel =
       | None -> Out_channel.newline stdout ; (zero_time_span, false)
       | Some code ->
           let start = Time_ns.now () in
-          let errored = Run.start args code in
+          let code = Run.start args code in
+          let errored = code <> Run.exit_code_to_enum Run.Success in
           (Time_ns.diff (Time_ns.now ()) start, errored)
     in
     loop elapsed errored (counter + 1)
