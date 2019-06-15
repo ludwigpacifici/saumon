@@ -19,7 +19,7 @@ let print_scanner tokens =
 
 let print_parser ast =
   Out_channel.print_endline "[PARSER]" ;
-  Ast.show_expression ast |> Out_channel.print_endline
+  Ast.show_program ast |> Out_channel.print_endline
 
 let print_scanner_errors =
   List.iter ~f:(fun (x : Scanner.error) ->
@@ -36,27 +36,28 @@ let print_interpreter_errors (err : Interpreter.error) =
 
 let start args data =
   let exit_code =
-    Scanner.scan_tokens data
-    |> Result.map_error ~f:(fun err -> print_scanner_errors err ; ScannerError)
-    |> Result.map ~f:(fun tokens ->
-           if args.print_scanner then print_scanner tokens ;
-           tokens )
-    |> Result.bind
-         ~f:
-           ( Parser.parse
-           >> Result.map_error ~f:(fun err ->
-                  print_parser_errors err ; ParserError ) )
-    |> Result.map ~f:(fun ast ->
-           if args.print_parser then print_parser ast ;
-           ast )
-    |> Result.bind
-         ~f:
-           ( Interpreter.evaluate
-           >> Result.map_error ~f:(fun err ->
-                  print_interpreter_errors err ;
-                  InterpreterError ) )
-    |> Result.map ~f:(Value.to_string >> Out_channel.print_endline)
-    |> Result.map ~f:(fun _ -> Success)
+    let tokens =
+      Scanner.scan_tokens data
+      |> Result.map_error ~f:(fun err ->
+             print_scanner_errors err ; ScannerError )
+    in
+    Result.iter tokens ~f:(fun tokens ->
+        if args.print_scanner then print_scanner tokens ) ;
+    let ast =
+      Result.bind tokens
+        ~f:
+          ( Parser.parse
+          >> Result.map_error ~f:(fun err ->
+                 print_parser_errors err ; ParserError ) )
+    in
+    Result.iter ast ~f:(fun ast -> if args.print_parser then print_parser ast) ;
+    Result.bind ast
+      ~f:
+        ( Interpreter.execute
+        >> Result.map_error ~f:(fun err ->
+               print_interpreter_errors err ;
+               InterpreterError ) )
+    |> Result.map ~f:(fun () -> Success)
   in
   match exit_code with
   | Ok code -> exit_code_to_enum code

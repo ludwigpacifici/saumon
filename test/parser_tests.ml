@@ -1,147 +1,178 @@
 open OUnit2
 open Test_utils
 open Saumon
+open Base
+
+(* Helper to add a semicolon at the end of an expression *)
+let statement_of_expression e =
+  let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon in
+  Ast.Expression_statement (e, semicolon)
+
+(* Helper to lift s expression_statement to a program *)
+let program_of_statement s = Ast.Program [s]
+
+(* Helper to parse a list of token representing an expression and add a
+   semicolon at the end *)
+let parse_with_semicolon ts =
+  let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon in
+  Parser.parse (ts @ [semicolon])
+
+(* Helper that assert a token list will be parsed as the given expression *)
+let assert_parse ts expected_expression =
+  parse_with_semicolon ts
+  === ( expected_expression |> statement_of_expression |> program_of_statement
+      |> Result.return )
+
+(* Helper that assert a token list will be parsed and generate errors *)
+let assert_parse_is_error ts =
+  parse_with_semicolon ts |> Result.is_error === true
 
 let expression_is_number inner =
-  Parser.parse [Token.of_token_kind ~kind:(Token_kind.Number inner)]
-  === Ok (Ast.Literal (Ast.Number inner))
+  let expression = Ast.Literal (Ast.Number inner) in
+  assert_parse [Token.of_token_kind ~kind:(Token_kind.Number inner)] expression
 
 let expression_is_string inner =
-  Parser.parse [Token.of_token_kind ~kind:(Token_kind.String inner)]
-  === Ok (Ast.Literal (Ast.String inner))
+  let expression = Ast.Literal (Ast.String inner) in
+  assert_parse [Token.of_token_kind ~kind:(Token_kind.String inner)] expression
 
 let expression_is_true_bool () =
-  Parser.parse [Token.of_token_kind ~kind:Token_kind.True]
-  === Ok (Ast.Literal (Ast.Bool true))
+  let expression = Ast.Literal (Ast.Bool true) in
+  assert_parse [Token.of_token_kind ~kind:Token_kind.True] expression
 
 let expression_is_false_bool () =
-  Parser.parse [Token.of_token_kind ~kind:Token_kind.False]
-  === Ok (Ast.Literal (Ast.Bool false))
+  let expression = Ast.Literal (Ast.Bool false) in
+  assert_parse [Token.of_token_kind ~kind:Token_kind.False] expression
 
 let expression_is_nil () =
-  Parser.parse [Token.of_token_kind ~kind:Token_kind.Nil]
-  === Ok (Ast.Literal Ast.Nil)
+  let expression = Ast.Literal Ast.Nil in
+  assert_parse [Token.of_token_kind ~kind:Token_kind.Nil] expression
 
 let expression_is_grouping () =
   let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
   let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
-  Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True; right]
-  === Ok (Ast.Grouping (left, Ast.Literal (Ast.Bool true), right))
+  let expression = Ast.Grouping (left, Ast.Literal (Ast.Bool true), right) in
+  assert_parse
+    [left; Token.of_token_kind ~kind:Token_kind.True; right]
+    expression
 
 let expression_grouping_bad_closed_paren () =
-  let open Base in
   let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
-  Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True; left]
-  |> Result.is_error === true
+  assert_parse_is_error [left; Token.of_token_kind ~kind:Token_kind.True; left]
 
 let expression_grouping_missing_closed_paren () =
-  let open Base in
   let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
-  Parser.parse [left; Token.of_token_kind ~kind:Token_kind.True]
-  |> Result.is_error === true
+  assert_parse_is_error [left; Token.of_token_kind ~kind:Token_kind.True]
 
 let expression_is_illegal () =
-  let open Base in
-  Parser.parse [Token.of_token_kind ~kind:Token_kind.Return]
-  |> Result.is_error === true
+  assert_parse_is_error [Token.of_token_kind ~kind:Token_kind.Return]
 
-let expression_is_empty () =
-  let open Base in
-  Parser.parse [] |> Result.is_error === true
+let expression_is_empty () = assert_parse_is_error []
 
 let expression_is_bang_unary () =
   let bang = Token.of_token_kind ~kind:Token_kind.Bang in
-  Parser.parse [bang; Token.of_token_kind ~kind:Token_kind.True]
-  === Ok (Ast.Unary (bang, Ast.Literal (Ast.Bool true)))
+  let expression = Ast.Unary (bang, Ast.Literal (Ast.Bool true)) in
+  parse_with_semicolon [bang; Token.of_token_kind ~kind:Token_kind.True]
+  === ( expression |> statement_of_expression |> program_of_statement
+      |> Result.return )
 
 let expression_is_minus_number n =
   let minus = Token.of_token_kind ~kind:Token_kind.Minus in
-  Parser.parse [minus; Token.of_token_kind ~kind:(Token_kind.Number n)]
-  === Ok (Ast.Unary (minus, Ast.Literal (Ast.Number n)))
+  let expression = Ast.Unary (minus, Ast.Literal (Ast.Number n)) in
+  assert_parse
+    [minus; Token.of_token_kind ~kind:(Token_kind.Number n)]
+    expression
 
 let multiplication_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Star in
-  Parser.parse
+  let expression =
+    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  in
+  assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
     ; infix
     ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
-  === Ok
-        (Ast.Binary
-           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
+    expression
 
 let division_of_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Slash in
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
-  let actual = Parser.parse [number 1.; infix; number 2.; infix; number 3.] in
-  let expect =
-    Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+  let expression =
+    Ast.Binary
+      ( Ast.Binary
+          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+      , infix
+      , Ast.Literal (Ast.Number 3.) )
   in
-  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
-  actual === expect
+  assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let addition_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Plus in
-  Parser.parse
+  let expression =
+    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  in
+  assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
     ; infix
     ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
-  === Ok
-        (Ast.Binary
-           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
+    expression
 
 let substract_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Minus in
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
-  let actual = Parser.parse [number 1.; infix; number 2.; infix; number 3.] in
-  let expect =
-    Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+  let expression =
+    Ast.Binary
+      ( Ast.Binary
+          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+      , infix
+      , Ast.Literal (Ast.Number 3.) )
   in
-  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
-  actual === expect
-
-let addition_tests =
-  [ ("Addition of two numbers" >:: fun _ -> addition_of_two_numbers 42.)
-  ; ("Substract three numbers" >:: fun _ -> substract_three_numbers ()) ]
+  assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let comparison_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Greater in
-  Parser.parse
+  let expression =
+    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  in
+  assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
     ; infix
     ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
-  === Ok
-        (Ast.Binary
-           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
+    expression
 
 let comparison_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Less_equal in
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
-  let actual = Parser.parse [number 1.; infix; number 2.; infix; number 3.] in
-  let expect =
-    Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+  let expression =
+    Ast.Binary
+      ( Ast.Binary
+          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+      , infix
+      , Ast.Literal (Ast.Number 3.) )
   in
-  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
-  actual === expect
+  assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let equality_of_two_numbers n =
   let infix = Token.of_token_kind ~kind:Token_kind.Equal_equal in
-  Parser.parse
+  let expression =
+    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  in
+  assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
     ; infix
     ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
-  === Ok
-        (Ast.Binary
-           (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n)))
+    expression
 
 let equality_three_numbers () =
   let infix = Token.of_token_kind ~kind:Token_kind.Bang_equal in
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
-  let actual = Parser.parse [number 1.; infix; number 2.; infix; number 3.] in
-  let expect =
-    Ast.Binary (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+  let expression =
+    Ast.Binary
+      ( Ast.Binary
+          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
+      , infix
+      , Ast.Literal (Ast.Number 3.) )
   in
-  let expect = Ok (Ast.Binary (expect, infix, Ast.Literal (Ast.Number 3.))) in
-  actual === expect
+  assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let parser_tests =
   [ ("Expression is number" >:: fun _ -> expression_is_number 42.)
@@ -161,6 +192,8 @@ let parser_tests =
   ; ( "Multiplication of two numbers"
     >:: fun _ -> multiplication_of_two_numbers 42. )
   ; ("Division of three numbers" >:: fun _ -> division_of_three_numbers ())
+  ; ("Addition of two numbers" >:: fun _ -> addition_of_two_numbers 42.)
+  ; ("Substract three numbers" >:: fun _ -> substract_three_numbers ())
   ; ("Comparison of two numbers" >:: fun _ -> comparison_of_two_numbers 42.)
   ; ("Comparison three numbers" >:: fun _ -> comparison_three_numbers ())
   ; ("Equality of two numbers" >:: fun _ -> equality_of_two_numbers 42.)

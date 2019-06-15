@@ -2,7 +2,7 @@ open Base
 open Omnipresent
 open Token
 
-(* Parse  rules following the pattern:
+(* Parse rules following the pattern:
  * rule -> k ( [infix0; ...; infixN] k )* ;
  *)
 let consume_one_or_many k infixes ts =
@@ -17,7 +17,35 @@ let consume_one_or_many k infixes ts =
   in
   k ts |> Result.bind ~f:(fun (l, ts) -> aux l ts)
 
-let rec expression ts =
+let rec statement ts =
+  match ts with
+  | [] | [{kind = Token_kind.Eof; _}] -> Ok (Ast.NoOperation, [])
+  | ({kind = Token_kind.Print; _} as print) :: ts ->
+      expression_statement ts
+      |> Result.map ~f:(fun ((e, semicolon), ts) ->
+             (Ast.Print_statement (print, e, semicolon), ts) )
+  | ts ->
+      expression_statement ts
+      |> Result.map ~f:(fun ((e, semicolon), ts) ->
+             (Ast.Expression_statement (e, semicolon), ts) )
+
+(* Parse rule following the pattern; * rule -> expression * ";" *)
+and expression_statement ts =
+  let expect_semicolon = function
+    | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts ->
+        Ok (semicolon, ts)
+    | t :: _ -> Error (["Expected a semicolon after parsed expression"], Some t)
+    | [] ->
+        Error
+          ( ["Expected a semicolon after parsed expression, but no token found"]
+          , None )
+  in
+  expression ts
+  |> Result.bind ~f:(fun (e, ts) ->
+         expect_semicolon ts
+         |> Result.map ~f:(fun (semicolon, ts) -> ((e, semicolon), ts)) )
+
+and expression ts =
   equality ts
   |> Result.map_error ~f:(fun (msg, t) ->
          ("Cannot read expression" :: msg |> List.rev, t) )
@@ -73,4 +101,11 @@ and primary = function
   | t :: _ -> Error (["Unexpected token"], Some t)
   | [] -> Error (["No token available to parse an expression"], None)
 
-let parse = expression >> Result.map ~f:fst
+let parse =
+  let rec loop acc = function
+    | [] -> Ok acc
+    | ts ->
+        statement ts
+        |> Result.bind ~f:(fun (statement, ts) -> loop (statement :: acc) ts)
+  in
+  loop [] >> Result.map ~f:Ast.make_program

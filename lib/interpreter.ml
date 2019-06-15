@@ -1,3 +1,5 @@
+open Omnipresent
+
 type error =
   { location : Location.t
   ; where : string
@@ -88,3 +90,20 @@ and evaluate_binary l t r =
         { location = t.location
         ; where = Token_kind.to_string t_kind
         ; message = "Not able to evaluate both left and right expression" }
+
+let execute (Ast.Program statements) =
+  List.fold statements ~init:(Ok []) ~f:(fun acc s ->
+      (* Stop as soon as there is one error *)
+      Result.bind acc ~f:(fun vs ->
+          match s with
+          | Ast.NoOperation -> acc
+          | Ast.Expression_statement (e, _) -> (
+            match evaluate e with
+            | Ok _ -> (* Discard on purpose the returned value *) acc
+            | Error err -> Error err )
+          | Ast.Print_statement (_, e, _) -> (
+            match evaluate e with
+            | Ok v -> (* Discard on purpose the returned value *) Ok (v :: vs)
+            | Error err -> Error err ) ) )
+  |> Result.map
+       ~f:(List.iter ~f:(Value.to_string >> Core.Out_channel.print_endline))
