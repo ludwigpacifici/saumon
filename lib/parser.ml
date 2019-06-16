@@ -2,7 +2,7 @@ open Base
 open Omnipresent
 open Token
 
-(* Parse rules following the pattern:
+(* Parse rules following pattern:
  * rule -> k ( [infix0; ...; infixN] k )* ;
  *)
 let consume_one_or_many k infixes ts =
@@ -20,6 +20,7 @@ let consume_one_or_many k infixes ts =
 let rec statement ts =
   match ts with
   | [] | [{kind = Token_kind.Eof; _}] -> Ok (Ast.NoOperation, [])
+  | {kind = Token_kind.Semicolon; _} :: ts -> Ok (Ast.NoOperation, ts)
   | ({kind = Token_kind.Print; _} as print) :: ts ->
       expression_statement ts
       |> Result.map ~f:(fun ((e, semicolon), ts) ->
@@ -29,7 +30,7 @@ let rec statement ts =
       |> Result.map ~f:(fun ((e, semicolon), ts) ->
              (Ast.Expression_statement (e, semicolon), ts) )
 
-(* Parse rule following the pattern; * rule -> expression * ";" *)
+(* Parse rules following pattern: rule -> expression * ";" *)
 and expression_statement ts =
   let expect_semicolon = function
     | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts ->
@@ -108,4 +109,4 @@ let parse =
         statement ts
         |> Result.bind ~f:(fun (statement, ts) -> loop (statement :: acc) ts)
   in
-  loop [] >> Result.map ~f:Ast.make_program
+  loop [] >> Result.map ~f:Ast.Program.return

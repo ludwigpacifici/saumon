@@ -35,4 +35,13 @@ and binary = expression * Token.t * expression
 
 and grouping = Token.t * expression * Token.t [@@deriving show, eq]
 
-let make_program x = Program x
+module Program = struct
+  open Base
+  open Omnipresent
+
+  let empty = Program [NoOperation]
+
+  let return = function [] -> empty | x -> Program x
+
+  let of_statement = List.return >> return
+end

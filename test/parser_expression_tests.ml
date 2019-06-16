@@ -8,9 +8,6 @@ let statement_of_expression e =
   let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon in
   Ast.Expression_statement (e, semicolon)
 
-(* Helper to lift s expression_statement to a program *)
-let program_of_statement s = Ast.Program [s]
-
 (* Helper to parse a list of token representing an expression and add a
    semicolon at the end *)
 let parse_with_semicolon ts =
@@ -20,8 +17,8 @@ let parse_with_semicolon ts =
 (* Helper that assert a token list will be parsed as the given expression *)
 let assert_parse ts expected_expression =
   parse_with_semicolon ts
-  === ( expected_expression |> statement_of_expression |> program_of_statement
-      |> Result.return )
+  === ( expected_expression |> statement_of_expression
+      |> Ast.Program.of_statement |> Result.return )
 
 (* Helper that assert a token list will be parsed and generate errors *)
 let assert_parse_is_error ts =
@@ -66,14 +63,10 @@ let expression_grouping_missing_closed_paren () =
 let expression_is_illegal () =
   assert_parse_is_error [Token.of_token_kind ~kind:Token_kind.Return]
 
-let expression_is_empty () = assert_parse_is_error []
-
 let expression_is_bang_unary () =
   let bang = Token.of_token_kind ~kind:Token_kind.Bang in
   let expression = Ast.Unary (bang, Ast.Literal (Ast.Bool true)) in
-  parse_with_semicolon [bang; Token.of_token_kind ~kind:Token_kind.True]
-  === ( expression |> statement_of_expression |> program_of_statement
-      |> Result.return )
+  assert_parse [bang; Token.of_token_kind ~kind:Token_kind.True] expression
 
 let expression_is_minus_number n =
   let minus = Token.of_token_kind ~kind:Token_kind.Minus in
@@ -174,7 +167,7 @@ let equality_three_numbers () =
   in
   assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
-let parser_tests =
+let parser_expression_tests =
   [ ("Expression is number" >:: fun _ -> expression_is_number 42.)
   ; ("Expression is string" >:: fun _ -> expression_is_string "hello")
   ; ("Expression is true bool" >:: fun _ -> expression_is_true_bool ())
@@ -186,7 +179,6 @@ let parser_tests =
   ; ( "Expression grouping missing closed paren"
     >:: fun _ -> expression_grouping_missing_closed_paren () )
   ; ("Expression is illegal" >:: fun _ -> expression_is_illegal ())
-  ; ("Expression is empty" >:: fun _ -> expression_is_empty ())
   ; ("Expression is bang unary" >:: fun _ -> expression_is_bang_unary ())
   ; ("Expression is minus number" >:: fun _ -> expression_is_minus_number 42.)
   ; ( "Multiplication of two numbers"
