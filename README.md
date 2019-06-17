@@ -31,6 +31,11 @@ With Dune:
 $ dune exec saumon
 ```
 
+## Progress
+
+* A Tree-Walk Interpreter: https://github.com/ludwigpacifici/saumon/projects/1
+* A Bytecode Virtual Machine: https://github.com/ludwigpacifici/saumon/projects/2
+
 ## Acknowledgments
 
 1. Designed by Bob Nystrom, [A handbook for making programming languages](http://www.craftinginterpreters.com/).
