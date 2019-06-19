@@ -31,6 +31,10 @@ With Dune:
 $ dune exec saumon
 ```
 
+## Continuous Integration [![Build Status](https://travis-ci.org/ludwigpacifici/saumon.svg?branch=master)](https://travis-ci.org/ludwigpacifici/saumon)
+
+Travis CI: https://travis-ci.org/ludwigpacifici/saumon
+
 ## Progress
 
 * A Tree-Walk Interpreter: https://github.com/ludwigpacifici/saumon/projects/1
