@@ -44,6 +44,10 @@ let expression_is_nil () =
   let expression = Ast.Literal Ast.Nil in
   assert_parse [Token.of_token_kind ~kind:Token_kind.Nil] expression
 
+let expression_is_identifier x =
+  let expression = Ast.Literal (Ast.Identifier x) in
+  assert_parse [Token.of_token_kind ~kind:(Token_kind.Identifier x)] expression
+
 let expression_is_grouping () =
   let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
   let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
@@ -173,6 +177,7 @@ let parser_expression_tests =
   ; ("Expression is true bool" >:: fun _ -> expression_is_true_bool ())
   ; ("Expression is false bool" >:: fun _ -> expression_is_false_bool ())
   ; ("Expression is nil" >:: fun _ -> expression_is_nil ())
+  ; ("Expression is identifier" >:: fun _ -> expression_is_identifier "x")
   ; ("Expression is grouping" >:: fun _ -> expression_is_grouping ())
   ; ( "Expression grouping bad closed paren"
     >:: fun _ -> expression_grouping_bad_closed_paren () )

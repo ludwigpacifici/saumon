@@ -96,14 +96,16 @@ let execute (Ast.Program statements) =
       (* Stop as soon as there is one error *)
       Result.bind acc ~f:(fun vs ->
           match s with
-          | Ast.NoOperation -> acc
-          | Ast.Expression_statement (e, _) -> (
-            match evaluate e with
-            | Ok _ -> (* Discard on purpose the returned value *) acc
-            | Error err -> Error err )
-          | Ast.Print_statement (_, e, _) -> (
-            match evaluate e with
-            | Ok v -> (* Discard on purpose the returned value *) Ok (v :: vs)
-            | Error err -> Error err ) ) )
+          | Ast.Statement s -> (
+            match s with
+            | Ast.Expression_statement (e, _) -> (
+              match evaluate e with
+              | Ok _ -> (* Discard on purpose the returned value *) acc
+              | Error err -> Error err )
+            | Ast.Print_statement (_, e, _) -> (
+              match evaluate e with
+              | Ok v -> (* Discard on purpose the returned value *) Ok (v :: vs)
+              | Error err -> Error err ) )
+          | _ -> failwith "This execution is not implemented"))
   |> Result.map
        ~f:(List.iter ~f:(Value.to_string >> Core.Out_channel.print_endline))
