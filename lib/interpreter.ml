@@ -4,7 +4,7 @@ type error =
   { location : Location.t
   ; where : string
   ; message : string }
-[@@deriving show]
+[@@deriving show, eq]
 
 open Base
 

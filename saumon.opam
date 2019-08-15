@@ -22,7 +22,7 @@ depends: [
   "core" {>= "v0.12"}
   "dune" {build}
   "ocaml" {>= "4.02"}
-  "ounit" {with-test & >= "2.0"}
+  "alcotest" {with-test & >= "0.8"}
   "ppx_deriving" {>= "4.2.1"}
   "ppx_jane" {>= "v0.12"}
 ]

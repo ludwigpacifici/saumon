@@ -1,3 +1,4 @@
 (test
  (name unit_tests)
- (libraries saumon oUnit))
+ (libraries saumon alcotest)
+ (action (run %{test} --color=always)))

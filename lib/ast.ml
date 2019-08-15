@@ -51,13 +51,13 @@ and unary = Token.t * expression
 
 and binary = expression * Token.t * expression
 
-and grouping = Token.t * expression * Token.t [@@deriving show]
+and grouping = Token.t * expression * Token.t [@@deriving show, eq]
 
 type expression_statement =
   expression
   * (* The prefix token is constantly equal to token_kind.Semicolon , i.e. ";" *)
     Token.t
-[@@deriving show]
+[@@deriving show, eq]
 
 type print_statement =
   (* The suffix token is constantly equal to token_kind.Prin , i.e. "print" *)
@@ -65,12 +65,12 @@ type print_statement =
   * expression
   * (* The prefix token is constantly equal to token_kind.Semicolon , i.e. ";" *)
     Token.t
-[@@deriving show]
+[@@deriving show, eq]
 
 type statement =
   | Expression_statement of expression_statement
   | Print_statement of print_statement
-[@@deriving show]
+[@@deriving show, eq]
 
 type variable_declaration =
   (* Constantly equal to token_kind.Var, i.e. "var" *)
@@ -81,14 +81,14 @@ type variable_declaration =
   (Token.t * expression) option
   * (* Constantly equal to token_kind.Semicolon , i.e. ";" *)
     Token.t
-[@@deriving show]
+[@@deriving show, eq]
 
 type declaration =
   | Variable_declaration of variable_declaration
   | Statement of statement
-[@@deriving show]
+[@@deriving show, eq]
 
-type program = Program of declaration list [@@deriving show]
+type program = Program of declaration list [@@deriving show, eq]
 
 module Program = struct
   open Base

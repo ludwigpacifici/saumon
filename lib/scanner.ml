@@ -4,6 +4,7 @@ type error =
   { location : Location.t
   ; where : string
   ; message : string }
+[@@deriving show, eq]
 
 let is_word_end = function
   | [] -> true
@@ -234,7 +235,7 @@ let rec loop location tokens = function
                 ; where = raw_number
                 ; message = "Expected to parse a float." } ] )
         |> Result.map ~f:(fun n ->
-               Token.make ~kind:(Token_kind.Number n) ~location )
+               Token.make ~kind:(Token_kind.Number n) ~location)
       in
       loop
         (Location.next_column location len)
