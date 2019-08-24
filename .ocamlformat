@@ -5,3 +5,6 @@ margin = 80
 parse-docstrings = true
 type-decl = sparse
 wrap-comments = true
+doc-comments = before
+break-fun-decl = fit-or-vertical
+break-fun-sig = fit-or-vertical

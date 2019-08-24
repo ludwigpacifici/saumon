@@ -19,7 +19,8 @@ let make_program_exn (str : string) : Ast.Program.t =
 
 (* Execute a program always with an empty environment. Useful for brief and
    comprehensives tests. *)
-let execute_with_empty_env ~(k : Environment.t * Value.t list -> unit)
+let execute_with_empty_env
+    ~(k : Environment.t * Value.t list -> unit)
     (p : Ast.Program.t) =
   let env = Environment.empty () in
   Interpreter.execute_k ~k env p

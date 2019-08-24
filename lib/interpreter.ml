@@ -78,7 +78,10 @@ and evaluate_unary (env : Environment.t) (t : Token.t) (e : Ast.expression) :
         ; where = Token_kind.to_string t_kind
         ; message = "Unknown unary operator" }
 
-and evaluate_binary (env : Environment.t) (l : Ast.expression) (t : Token.t)
+and evaluate_binary
+    (env : Environment.t)
+    (l : Ast.expression)
+    (t : Token.t)
     (r : Ast.expression) : (Value.t, error) Result.t =
   match (evaluate env l, t.kind, evaluate env r) with
   | Ok l, Token_kind.Equal_equal, Ok r -> Ok (Value.Bool (Value.equal l r))
@@ -122,7 +125,8 @@ let execute_statement (env : Environment.t) (s : Ast.statement) :
   | Ast.Print_statement (_, e, _) ->
       evaluate env e |> Result.bind ~f:(fun v -> Ok (Some v))
 
-let execute_variable_declaration (env : Environment.t)
+let execute_variable_declaration
+    (env : Environment.t)
     (v : Ast.variable_declaration) : (Environment.t, error) Result.t =
   match v with
   | _, Ast.Identifier id, None, _ ->
@@ -136,7 +140,8 @@ let execute_variable_declaration (env : Environment.t)
         ; where = Token_kind.to_string t.kind
         ; message = "Cannot execute a variable declaration." }
 
-let extract_values ((env : Environment.t), (vs : Value.t list))
+let extract_values
+    ((env : Environment.t), (vs : Value.t list))
     (d : Ast.declaration) =
   match d with
   | Ast.Statement s ->
@@ -153,7 +158,9 @@ let extract_values ((env : Environment.t), (vs : Value.t list))
 let stdout_print ((_ : Environment.t), (vs : Value.t list)) : unit =
   List.iter vs ~f:(Value.to_string >> Core.Out_channel.print_endline)
 
-let execute_k ~(k : Environment.t * Value.t list -> unit) (env : Environment.t)
+let execute_k
+    ~(k : Environment.t * Value.t list -> unit)
+    (env : Environment.t)
     (program : Ast.Program.t) : (unit, error) Result.t =
   List.fold_result ~init:(env, []) ~f:extract_values (Ast.Program.get program)
   |> Result.map ~f:k
