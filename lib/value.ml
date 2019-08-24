@@ -7,17 +7,20 @@ type t =
   | Nil
 [@@deriving show, eq]
 
+open Base
+
 let to_string = function
-  | Bool x -> string_of_bool x
+  | Bool x -> Bool.to_string x
   | Nil -> "Nil"
-  | Number x -> string_of_float x
+  | Number x -> Float.to_string x
   | String x -> x
 
 let of_ast_literal = function
   | Ast.Number x -> Number x
   | Ast.Identifier _ ->
-      (* Should it use the name to resolve the value? *)
-      failwith "Evaluating an identifier is not implemented."
+      failwith
+        "Evaluating an identifier will lead to dependency cycle between with \
+         Environment."
   | Ast.String x -> String x
   | Ast.Bool x -> Bool x
   | Ast.Nil -> Nil

@@ -88,18 +88,17 @@ type declaration =
   | Statement of statement
 [@@deriving show, eq]
 
-type program = Program of declaration list [@@deriving show, eq]
-
 module Program = struct
-  open Base
+  type t = Program of declaration list [@@deriving show, eq]
 
   let empty = Program []
 
-  let return = function [] -> empty | x -> Program x
+  let return : declaration list -> t = function [] -> empty | x -> Program x
 
-  let of_statement (x : statement) : program =
-    Statement x |> List.return |> return
+  let of_statement (x : statement) : t = [Statement x] |> return
 
-  let of_declaration (x : variable_declaration) : program =
-    Variable_declaration x |> List.return |> return
+  let of_declaration (x : variable_declaration) : t =
+    [Variable_declaration x] |> return
+
+  let get (Program p) : declaration list = p
 end

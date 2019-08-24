@@ -38,6 +38,23 @@ let valid_declaration_with_initialization () =
       , semicolon )
     |> Ast.Program.of_declaration |> Result.return )
 
+let plus = Token.of_token_kind ~kind:Token_kind.Plus
+
+let valid_declaration_with_expression () =
+  check_parse
+    (Parser.parse [var; identifier; equal; value; plus; value; semicolon])
+    ( ( var
+      , Ast.Identifier raw_identifier
+      , Some
+          ( equal
+          , Ast.Binary
+              ( Ast.Literal (Ast.Number 5.)
+              , { Token.kind = Token_kind.Plus
+                ; location = {Location.line = 1; column = 0} }
+              , Ast.Literal (Ast.Number 5.) ) )
+      , semicolon )
+    |> Ast.Program.of_declaration |> Result.return )
+
 let no_declaration () = check_parse (Parser.parse []) (Ok Ast.Program.empty)
 
 let empty_token_list () =
@@ -72,6 +89,8 @@ let all =
       valid_declaration_with_no_initialization
   ; Alcotest.test_case "Valid declaration with initialization" `Quick
       valid_declaration_with_initialization
+  ; Alcotest.test_case "Valid declaration with expression" `Quick
+      valid_declaration_with_expression
   ; Alcotest.test_case "No declaration" `Quick no_declaration
   ; Alcotest.test_case "Empty token list" `Quick empty_token_list
   ; Alcotest.test_case "Only var keyword is error" `Quick

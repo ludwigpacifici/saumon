@@ -121,7 +121,7 @@ let declaration (ts : Token.t list) :
              | Ast.Literal (Ast.Identifier raw_identifier as identifier) -> (
                match ts with
                | ({kind = Token_kind.Equal; _} as equal) :: ts ->
-                   primary ts
+                   expression ts
                    |> Result.bind ~f:(function
                         | ( value
                           , ({kind = Token_kind.Semicolon; _} as semicolon)
@@ -157,7 +157,7 @@ let declaration (ts : Token.t list) :
                      , Some var ) )
              | _ ->
                  Error
-                   ( [ "An identifier literal after 'var' is expected to \
+                   ( [ "A literal identifier after 'var' is expected to \
                         declare a variable name" ]
                    , Some var ))
   | ts ->
@@ -174,5 +174,6 @@ let rec loop (acc : Ast.declaration list) (ts : Token.t list) :
       |> Result.bind ~f:(fun (x, ts) ->
              match x with Some x -> loop (x :: acc) ts | None -> loop acc ts)
 
-let parse (ts : Token.t list) : (Ast.program, error) Result.t =
-  loop [] ts |> Result.map ~f:Ast.Program.return
+let parse (ts : Token.t list) : (Ast.Program.t, error) Result.t =
+  let open Omnipresent in
+  loop [] ts |> Result.map ~f:(List.rev >> Ast.Program.return)

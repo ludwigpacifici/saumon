@@ -19,11 +19,11 @@ let print_scanner tokens =
 
 let print_parser ast =
   Out_channel.print_endline "[PARSER]" ;
-  Ast.show_program ast |> Out_channel.print_endline
+  Ast.Program.show ast |> Out_channel.print_endline
 
 let print_scanner_errors =
   List.iter ~f:(fun (x : Scanner.error) ->
-      Display.error x.location ~where:x.where ~message:x.message )
+      Display.error x.location ~where:x.where ~message:x.message)
 
 let print_parser_errors (errs, t) =
   List.iter errs ~f:Out_channel.print_endline ;
@@ -39,24 +39,26 @@ let start args data =
     let tokens =
       Scanner.scan_tokens data
       |> Result.map_error ~f:(fun err ->
-             print_scanner_errors err ; ScannerError )
+             print_scanner_errors err ; ScannerError)
     in
     Result.iter tokens ~f:(fun tokens ->
-        if args.print_scanner then print_scanner tokens ) ;
+        if args.print_scanner then print_scanner tokens) ;
     let ast =
       Result.bind tokens
         ~f:
           ( Parser.parse
           >> Result.map_error ~f:(fun err ->
-                 print_parser_errors err ; ParserError ) )
+                 print_parser_errors err ; ParserError) )
     in
     Result.iter ast ~f:(fun ast -> if args.print_parser then print_parser ast) ;
     Result.bind ast
       ~f:
-        ( Interpreter.execute
-        >> Result.map_error ~f:(fun err ->
-               print_interpreter_errors err ;
-               InterpreterError ) )
+        ((* TODO: For now there is only one global environment *)
+         let env = Environment.empty () in
+         Interpreter.execute env
+         >> Result.map_error ~f:(fun err ->
+                print_interpreter_errors err ;
+                InterpreterError))
     |> Result.map ~f:(fun () -> Success)
   in
   match exit_code with

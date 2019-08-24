@@ -8,61 +8,56 @@ let check_value =
 let check_true =
   Alcotest.(check bool) "check Interpreter.evaluate is error" true
 
+let evaluate = Interpreter.evaluate (Environment.empty ())
+
 let evaluate_literal () =
+  check_value (evaluate (Ast.Literal (Ast.Number 42.))) (Ok (Value.Number 42.)) ;
   check_value
-    (Interpreter.evaluate (Ast.Literal (Ast.Number 42.)))
-    (Ok (Value.Number 42.)) ;
-  check_value
-    (Interpreter.evaluate (Ast.Literal (Ast.String "hello")))
+    (evaluate (Ast.Literal (Ast.String "hello")))
     (Ok (Value.String "hello")) ;
-  check_value
-    (Interpreter.evaluate (Ast.Literal (Ast.Bool true)))
-    (Ok (Value.Bool true)) ;
-  check_value
-    (Interpreter.evaluate (Ast.Literal (Ast.Bool false)))
-    (Ok (Value.Bool false)) ;
-  check_value (Interpreter.evaluate (Ast.Literal Ast.Nil)) (Ok Value.Nil)
+  check_value (evaluate (Ast.Literal (Ast.Bool true))) (Ok (Value.Bool true)) ;
+  check_value (evaluate (Ast.Literal (Ast.Bool false))) (Ok (Value.Bool false)) ;
+  check_value (evaluate (Ast.Literal Ast.Nil)) (Ok Value.Nil)
 
 let evaluate_grouping () =
   let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
   let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
   check_value
-    (Interpreter.evaluate
-       (Ast.Grouping (left, Ast.Literal (Ast.Number 42.), right)))
+    (evaluate (Ast.Grouping (left, Ast.Literal (Ast.Number 42.), right)))
     (Ok (Value.Number 42.))
 
 let evaluate_unary () =
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Unary
           ( Token.of_token_kind ~kind:Token_kind.Minus
           , Ast.Literal (Ast.Number 42.) )))
     (Ok (Value.Number (-42.))) ;
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Unary
            ( Token.of_token_kind ~kind:Token_kind.Minus
            , Ast.Literal (Ast.String "42.") ))
     |> Result.is_error ) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Unary
           ( Token.of_token_kind ~kind:Token_kind.Bang
           , Ast.Literal (Ast.Number 42.) )))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Unary
           ( Token.of_token_kind ~kind:Token_kind.Bang
           , Ast.Literal (Ast.Bool false) )))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Unary
           (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal Ast.Nil)))
     (Ok (Value.Bool true)) ;
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Unary
            ( Token.of_token_kind ~kind:Token_kind.Plus
            , Ast.Literal (Ast.Number 42.) ))
@@ -74,23 +69,23 @@ let evaluate_binary () =
   let n1_ast = Ast.Literal (Ast.Number n1) in
   let n2_ast = Ast.Literal (Ast.Number n2) in
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Plus, n2_ast)))
     (Ok (Value.Number (n1 +. n2))) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Minus, n2_ast)))
     (Ok (Value.Number (n1 -. n2))) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Star, n2_ast)))
     (Ok (Value.Number (n1 *. n2))) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Slash, n2_ast)))
     (Ok (Value.Number (n1 /. n2))) ;
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Bang, n2_ast))
     |> Result.is_error ) ;
   let str1 = "hello" in
@@ -98,104 +93,104 @@ let evaluate_binary () =
   let str1_ast = Ast.Literal (Ast.String str1) in
   let str2_ast = Ast.Literal (Ast.String str2) in
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (str1_ast, Token.of_token_kind ~kind:Token_kind.Plus, str2_ast)))
     (Ok (Value.String (str1 ^ str2))) ;
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Binary
            (str1_ast, Token.of_token_kind ~kind:Token_kind.Bang, str2_ast))
     |> Result.is_error ) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast)))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater_equal, n2_ast)))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Less, n2_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Less_equal, n2_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, n1_ast)))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, str1_ast)))
     (Ok (Value.Bool true)) ;
   let t_ast = Ast.Literal (Ast.Bool true) in
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (t_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast)))
     (Ok (Value.Bool true)) ;
   let f_ast = Ast.Literal (Ast.Bool false) in
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (f_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, f_ast)))
     (Ok (Value.Bool true)) ;
   let nil_ast = Ast.Literal Ast.Nil in
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (nil_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, str1_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (t_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
     (Ok (Value.Bool false)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, n2_ast)))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (str1_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, str2_ast)))
     (Ok (Value.Bool true)) ;
   check_value
-    (Interpreter.evaluate
+    (evaluate
        (Ast.Binary
           (t_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, f_ast)))
     (Ok (Value.Bool true)) ;
@@ -205,17 +200,17 @@ let evaluate_binary () =
       , Ast.Literal (Ast.String "42.") )
   in
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Binary
            (bad_expression, Token.of_token_kind ~kind:Token_kind.Plus, n2_ast))
     |> Result.is_error ) ;
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Binary
            (n1_ast, Token.of_token_kind ~kind:Token_kind.Plus, bad_expression))
     |> Result.is_error ) ;
   check_true
-    ( Interpreter.evaluate
+    ( evaluate
         (Ast.Binary
            ( bad_expression
            , Token.of_token_kind ~kind:Token_kind.Plus

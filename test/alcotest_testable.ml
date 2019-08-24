@@ -3,7 +3,7 @@ open Saumon
 
 let ast_literal = testable Ast.pp_literal Ast.equal_literal
 
-let ast_program = testable Ast.pp_program Ast.equal_program
+let ast_program = testable Ast.Program.pp Ast.Program.equal
 
 let scanner_error = testable Scanner.pp_error Scanner.equal_error
 
