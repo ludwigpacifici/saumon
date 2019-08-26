@@ -17,6 +17,20 @@ let scan_comment () =
        [ Token.make ~kind:Token_kind.Eof
            ~location:(Location.make ~line:1 ~column:0) ])
 
+let scan_drop_comment_line () =
+  check
+    (Scanner.scan_tokens "// Comment is dropped")
+    (Ok
+       [ Token.make ~kind:Token_kind.Eof
+           ~location:(Location.make ~line:1 ~column:0) ])
+
+let scan_drop_comment_line_and_start_new_line () =
+  check
+    (Scanner.scan_tokens "// Comment is dropped\n")
+    (Ok
+       [ Token.make ~kind:Token_kind.Eof
+           ~location:(Location.make ~line:2 ~column:0) ])
+
 let scan_letf_paren () =
   check (Scanner.scan_tokens "(")
     (Ok
@@ -374,6 +388,9 @@ let scan_error () =
 let all =
   [ Alcotest.test_case "Scan empty" `Quick scan_empty
   ; Alcotest.test_case "Scan comment" `Quick scan_comment
+  ; Alcotest.test_case "Scan drop comment line" `Quick scan_drop_comment_line
+  ; Alcotest.test_case "Scan drop comment line and start new line" `Quick
+      scan_drop_comment_line_and_start_new_line
   ; Alcotest.test_case "Scan letf paren" `Quick scan_letf_paren
   ; Alcotest.test_case "Scan right paren" `Quick scan_right_paren
   ; Alcotest.test_case "Scan left brace" `Quick scan_left_brace

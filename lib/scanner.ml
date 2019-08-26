@@ -64,11 +64,10 @@ let rec loop location tokens = function
         (Location.next_column location 1)
         (Result.map tokens ~f:(make_add_token Semicolon location))
         tl
-  | '/' :: '/' :: tl -> (
-    (* Discard data up to the end of the line or EOF *)
-    match List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl with
-    | _, [] -> loop location tokens tl
-    | _, _ -> loop (Location.next_line location) tokens tl )
+  | '/' :: '/' :: tl ->
+      (* Discard data up to the end of the line or EOF *)
+      List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl
+      |> snd |> loop location tokens
   | '/' :: tl ->
       loop
         (Location.next_column location 1)

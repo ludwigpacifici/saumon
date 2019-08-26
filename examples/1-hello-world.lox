@@ -1,1 +1,4 @@
+// This line is comment.
+
+// Expect to print "hello, world!" to stdout.
 print "hello, world!";
