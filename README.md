@@ -25,10 +25,16 @@ To use saumon in interactive mode, simply run
 $ saumon
 ```
 
-With Dune:
+Run with Dune:
 
 ```bash
 $ dune exec saumon
+```
+
+Install with Opam:
+
+```bash
+$ opam install .
 ```
 
 ## Continuous Integration [![Build Status](https://travis-ci.org/ludwigpacifici/saumon.svg?branch=master)](https://travis-ci.org/ludwigpacifici/saumon)
@@ -44,3 +50,7 @@ Travis CI: https://travis-ci.org/ludwigpacifici/saumon
 
 1. Designed by Bob Nystrom, [A handbook for making programming languages](http://www.craftinginterpreters.com/).
 2. Inspired by [Rulox](https://github.com/mariosangiorgio/rulox).
+
+## License
+
+See [LICENSE](LICENSE).

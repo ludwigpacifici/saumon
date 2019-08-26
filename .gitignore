@@ -12,7 +12,7 @@
 *.o
 *~
 .merlin
-/README.html
+README.html
 _build/
 setup.data
 setup.log
