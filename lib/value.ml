@@ -11,7 +11,7 @@ open Base
 
 let to_string = function
   | Bool x -> Bool.to_string x
-  | Nil -> "Nil"
+  | Nil -> "nil"
   | Number x -> Float.to_string x
   | String x -> x
 

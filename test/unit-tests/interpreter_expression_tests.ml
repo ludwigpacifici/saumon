@@ -1,5 +1,6 @@
 open Base
 open Saumon
+open Omnipresent
 module A = Alcotest_testable
 
 let check_value =
@@ -8,7 +9,7 @@ let check_value =
 let check_true =
   Alcotest.(check bool) "check Interpreter.evaluate is error" true
 
-let evaluate = Interpreter.evaluate (Environment.empty ())
+let evaluate = Interpreter.evaluate (Environment.empty ()) >> Result.map ~f:snd
 
 let evaluate_literal () =
   check_value (evaluate (Ast.Literal (Ast.Number 42.))) (Ok (Value.Number 42.)) ;
@@ -64,8 +65,8 @@ let evaluate_unary () =
     |> Result.is_error )
 
 let evaluate_binary () =
-  let n1 = 2. in
-  let n2 = 1. in
+  let n1 = 1. in
+  let n2 = 2. in
   let n1_ast = Ast.Literal (Ast.Number n1) in
   let n2_ast = Ast.Literal (Ast.Number n2) in
   check_value
@@ -104,22 +105,22 @@ let evaluate_binary () =
     |> Result.is_error ) ;
   check_value
     (evaluate
-       (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast)))
-    (Ok (Value.Bool true)) ;
-  check_value
-    (evaluate
-       (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater_equal, n2_ast)))
-    (Ok (Value.Bool true)) ;
-  check_value
-    (evaluate
        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Less, n2_ast)))
-    (Ok (Value.Bool false)) ;
+    (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Binary
           (n1_ast, Token.of_token_kind ~kind:Token_kind.Less_equal, n2_ast)))
+    (Ok (Value.Bool true)) ;
+  check_value
+    (evaluate
+       (Ast.Binary
+          (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast)))
+    (Ok (Value.Bool false)) ;
+  check_value
+    (evaluate
+       (Ast.Binary
+          (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater_equal, n2_ast)))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate

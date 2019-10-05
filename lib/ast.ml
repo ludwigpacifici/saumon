@@ -12,7 +12,10 @@
  *
  * print_statement ::= "print" expression ";"
  *
- * expression ::= equality
+ * expression ::= assignment ;
+ *
+ * assignment ::= IDENTIFIER "=" assignment
+ *               | equality ;
  *
  * equality ::= comparison ( ( "!=" | "==" ) comparison )*
  *
@@ -39,6 +42,7 @@ type expression =
   | Unary of unary
   | Binary of binary
   | Grouping of grouping
+  | Assignment of assignment
 
 and literal =
   | Number of float
@@ -53,17 +57,23 @@ and binary = expression * Token.t * expression
 
 and grouping = Token.t * expression * Token.t [@@deriving show, eq]
 
+and assignment =
+  (* Constantly equal to token_kind.Identifier *)
+  literal * (* Constantly equal to Identifier *)
+            Token.t * expression
+[@@deriving show, eq]
+
 type expression_statement =
   expression
-  * (* The prefix token is constantly equal to token_kind.Semicolon , i.e. ";" *)
+  * (* The prefix token is constantly equal to token_kind.Semicolon, i.e. ";" *)
     Token.t
 [@@deriving show, eq]
 
 type print_statement =
-  (* The suffix token is constantly equal to token_kind.Prin , i.e. "print" *)
+  (* The suffix token is constantly equal to token_kind.Print, i.e. "print" *)
   Token.t
   * expression
-  * (* The prefix token is constantly equal to token_kind.Semicolon , i.e. ";" *)
+  * (* The prefix token is constantly equal to token_kind.Semicolon, i.e. ";" *)
     Token.t
 [@@deriving show, eq]
 

@@ -1,4 +1,40 @@
 // This line is comment.
 
-// Expect to print "hello, world!" to stdout.
+// Expect to print "hello, world!" to stdout
 print "hello, world!";
+
+// Data Types
+
+print true; // Not false
+print false; // Not *not* false
+
+print 1234; // An integer
+print 12.34; // A decimal number
+
+print "I am a string";
+print ""; // The empty string
+print "123"; // This is a string, not a number
+print "Concat" + " a " +  "string"; // This is string concatenation
+
+print nil; // This is Nil
+
+// Arithmetic
+
+print 2 + 2;
+print 3 - 4;
+print 2 * 2;
+print 1 / 2;
+
+print -2;
+
+// Comparison and equality
+
+print 1 < 2;
+print 1 <= 2;
+print 3 > 2;
+print 3 >= 2;
+
+print 1 == 2; // false
+print "cat" != "dog"; // true
+print 314 == "pi"; // false
+print 123 == "123"; // false

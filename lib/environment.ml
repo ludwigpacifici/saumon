@@ -9,4 +9,6 @@ let is_empty (env : t) : bool = Map.is_empty env
 let define ~(env : t) ~(id : string) (value : Value.t) =
   Map.update env id ~f:(function None -> value | Some _ -> value)
 
+let contains ~(env : t) ~(id : string) : bool = Map.mem env id
+
 let get ~(env : t) ~(id : string) = Map.find env id

@@ -1,5 +1,12 @@
 var x = 2;
 var y = 40;
 
-// Expect to print 42 to stdout
-print x + y;
+print x + y; // prints 42
+
+var breakfast = "bagels";
+print breakfast; // "bagels"
+breakfast = "beignets";
+print breakfast; // "beignets"
+
+var iAmNil;
+print iAmNil; // prints "nil"

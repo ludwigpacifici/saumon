@@ -176,38 +176,85 @@ let equality_three_numbers () =
   in
   assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
+let assign_a_number n () =
+  let raw_identifier = "x" in
+  let identifier =
+    Token.of_token_kind ~kind:(Token_kind.Identifier raw_identifier)
+  in
+  let equal = Token.of_token_kind ~kind:Token_kind.Equal in
+  let number = Token.of_token_kind ~kind:(Token_kind.Number n) in
+  let expression =
+    Ast.Assignment
+      (Ast.Identifier raw_identifier, equal, Ast.Literal (Ast.Number n))
+  in
+  assert_parse [identifier; equal; number] expression
+
+let nested_assignments n () =
+  let raw_identifier = "x" in
+  let identifier =
+    Token.of_token_kind ~kind:(Token_kind.Identifier raw_identifier)
+  in
+  let equal = Token.of_token_kind ~kind:Token_kind.Equal in
+  let number = Token.of_token_kind ~kind:(Token_kind.Number n) in
+  let expression =
+    Ast.Assignment
+      ( Ast.Identifier raw_identifier
+      , equal
+      , Ast.Assignment
+          (Ast.Identifier raw_identifier, equal, Ast.Literal (Ast.Number n)) )
+  in
+  assert_parse [identifier; equal; identifier; equal; number] expression
+
+let assign_with_error () =
+  let identifier = Token.of_token_kind ~kind:(Token_kind.Identifier "x") in
+  let equal = Token.of_token_kind ~kind:Token_kind.Equal in
+  let number = Token.of_token_kind ~kind:(Token_kind.Number 42.) in
+  assert_parse_is_error [identifier; equal; equal; number]
+
+let assign_with_invalid_lhs () =
+  let identifier_x = Token.of_token_kind ~kind:(Token_kind.Identifier "x") in
+  let identifier_y = Token.of_token_kind ~kind:(Token_kind.Identifier "y") in
+  let identifier_z = Token.of_token_kind ~kind:(Token_kind.Identifier "z") in
+  let plus = Token.of_token_kind ~kind:Token_kind.Plus in
+  let equal = Token.of_token_kind ~kind:Token_kind.Equal in
+  assert_parse_is_error [identifier_x; plus; identifier_y; equal; identifier_z]
+
 let all =
-  [ Alcotest.test_case "expression_is_number" `Quick (expression_is_number 42.)
-  ; Alcotest.test_case "expression_is_string" `Quick
+  [ Alcotest.test_case "Expression is number" `Quick (expression_is_number 42.)
+  ; Alcotest.test_case "Expression is string" `Quick
       (expression_is_string "hello")
-  ; Alcotest.test_case "expression_is_true_bool" `Quick expression_is_true_bool
-  ; Alcotest.test_case "expression_is_false_bool" `Quick
+  ; Alcotest.test_case "Expression is true bool" `Quick expression_is_true_bool
+  ; Alcotest.test_case "Expression is false bool" `Quick
       expression_is_false_bool
-  ; Alcotest.test_case "expression_is_nil" `Quick expression_is_nil
-  ; Alcotest.test_case "expression_is_identifier" `Quick
+  ; Alcotest.test_case "Expression is nil" `Quick expression_is_nil
+  ; Alcotest.test_case "Expression is identifier" `Quick
       (expression_is_identifier "x")
-  ; Alcotest.test_case "expression_is_grouping" `Quick expression_is_grouping
-  ; Alcotest.test_case "expression_grouping_bad_closed_paren" `Quick
+  ; Alcotest.test_case "Expression is grouping" `Quick expression_is_grouping
+  ; Alcotest.test_case "Expression grouping bad closed paren" `Quick
       expression_grouping_bad_closed_paren
-  ; Alcotest.test_case "expression_grouping_missing_closed_paren" `Quick
+  ; Alcotest.test_case "Expression grouping missing closed paren" `Quick
       expression_grouping_missing_closed_paren
-  ; Alcotest.test_case "expression_is_illegal" `Quick expression_is_illegal
-  ; Alcotest.test_case "expression_is_bang_unary" `Quick
+  ; Alcotest.test_case "Expression is illegal" `Quick expression_is_illegal
+  ; Alcotest.test_case "Expression is bang unary" `Quick
       expression_is_bang_unary
-  ; Alcotest.test_case "expression_is_minus_number" `Quick
+  ; Alcotest.test_case "Expression is minus number" `Quick
       (expression_is_minus_number 42.)
-  ; Alcotest.test_case "multiplication_of_two_numbers" `Quick
+  ; Alcotest.test_case "Multiplication of two numbers" `Quick
       (multiplication_of_two_numbers 42.)
-  ; Alcotest.test_case "division_of_three_numbers" `Quick
+  ; Alcotest.test_case "Division of three numbers" `Quick
       division_of_three_numbers
-  ; Alcotest.test_case "addition_of_two_numbers" `Quick
+  ; Alcotest.test_case "Addition of two numbers" `Quick
       (addition_of_two_numbers 42.)
-  ; Alcotest.test_case "substract_three_numbers" `Quick substract_three_numbers
-  ; Alcotest.test_case "comparison_of_two_numbers" `Quick
+  ; Alcotest.test_case "Substract three numbers" `Quick substract_three_numbers
+  ; Alcotest.test_case "Comparison of two numbers" `Quick
       (comparison_of_two_numbers 42.)
-  ; Alcotest.test_case "comparison_three_numbers" `Quick
+  ; Alcotest.test_case "Comparison three numbers" `Quick
       comparison_three_numbers
-  ; Alcotest.test_case "equality_of_two_numbers" `Quick
+  ; Alcotest.test_case "Equality of two numbers" `Quick
       (equality_of_two_numbers 42.)
-  ; Alcotest.test_case "equality_three_numbers" `Quick equality_three_numbers
+  ; Alcotest.test_case "Equality three numbers" `Quick equality_three_numbers
+  ; Alcotest.test_case "Assign a number" `Quick (assign_a_number 42.)
+  ; Alcotest.test_case "Nested assignments" `Quick (nested_assignments 42.)
+  ; Alcotest.test_case "Assign with error" `Quick assign_with_error
+  ; Alcotest.test_case "Assign with invalid lhs" `Quick assign_with_invalid_lhs
   ]

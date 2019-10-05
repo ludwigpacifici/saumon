@@ -1,6 +1,11 @@
 # Saumon ><>
 
-Lox language implemented in [OCaml](https://ocaml.org/).
+[Lox](http://www.craftinginterpreters.com/the-lox-language.html) language implemented in [OCaml](https://ocaml.org/).
+
+## Goals
+
+* Learn about compiler front ends and interpreters.
+* Play and learn with OCaml and its ecosystem. Note, this implementation diverge slightly from the book ; OCaml idiomatic code is quite different from Java (used for the original implementation).
 
 ## Build
 
@@ -25,15 +30,10 @@ To use saumon in interactive mode, simply run
 $ saumon
 ```
 
-Run with Dune:
-
-```bash
-$ dune exec saumon
-```
-
 Install with Opam:
 
 ```bash
+$ # cd project/root/folder
 $ opam install .
 ```
 

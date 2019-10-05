@@ -152,7 +152,7 @@ let scan_equal () =
            ~location:(Location.make ~line:1 ~column:1) ])
 
 let scan_greater_equal () =
-  check (Scanner.scan_tokens "<=")
+  check (Scanner.scan_tokens ">=")
     (Ok
        [ Token.make ~kind:Token_kind.Greater_equal
            ~location:(Location.make ~line:1 ~column:0)
@@ -160,7 +160,7 @@ let scan_greater_equal () =
            ~location:(Location.make ~line:1 ~column:2) ])
 
 let scan_greater () =
-  check (Scanner.scan_tokens "<")
+  check (Scanner.scan_tokens ">")
     (Ok
        [ Token.make ~kind:Token_kind.Greater
            ~location:(Location.make ~line:1 ~column:0)
@@ -168,7 +168,7 @@ let scan_greater () =
            ~location:(Location.make ~line:1 ~column:1) ])
 
 let scan_less_equal () =
-  check (Scanner.scan_tokens ">=")
+  check (Scanner.scan_tokens "<=")
     (Ok
        [ Token.make ~kind:Token_kind.Less_equal
            ~location:(Location.make ~line:1 ~column:0)
@@ -176,7 +176,7 @@ let scan_less_equal () =
            ~location:(Location.make ~line:1 ~column:2) ])
 
 let scan_less () =
-  check (Scanner.scan_tokens ">")
+  check (Scanner.scan_tokens "<")
     (Ok
        [ Token.make ~kind:Token_kind.Less
            ~location:(Location.make ~line:1 ~column:0)

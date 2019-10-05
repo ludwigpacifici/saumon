@@ -22,9 +22,21 @@ type 'ast ok = 'ast * Token.t list
 type error = string list * Token.t option
 
 let rec expression (ts : Token.t list) : (Ast.expression ok, error) Result.t =
-  equality ts
+  assignment ts
   |> Result.map_error ~f:(fun (msg, t) ->
          ("Cannot read expression" :: msg |> List.rev, t))
+
+and assignment (ts : Token.t list) : (Ast.expression ok, error) Result.t =
+  match ts with
+  | {kind = Token_kind.Identifier identifier; _}
+    :: ({kind = Token_kind.Equal; _} as equal) :: ts ->
+      expression ts
+      |> Result.map ~f:(fun (expr, ts) ->
+             (Ast.Assignment (Ast.Identifier identifier, equal, expr), ts))
+  | ts ->
+      equality ts
+      |> Result.map_error ~f:(fun (msg, t) ->
+             ("Cannot read equality" :: msg |> List.rev, t))
 
 and equality (ts : Token.t list) : (Ast.expression ok, error) Result.t =
   consume_one_or_many comparison

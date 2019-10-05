@@ -101,22 +101,22 @@ let rec loop location tokens = function
   | '<' :: '=' :: tl ->
       loop
         (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Greater_equal location))
+        (Result.map tokens ~f:(make_add_token Less_equal location))
         tl
   | '<' :: tl ->
       loop
         (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Greater location))
+        (Result.map tokens ~f:(make_add_token Less location))
         tl
   | '>' :: '=' :: tl ->
       loop
         (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Less_equal location))
+        (Result.map tokens ~f:(make_add_token Greater_equal location))
         tl
   | '>' :: tl ->
       loop
         (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Less location))
+        (Result.map tokens ~f:(make_add_token Greater location))
         tl
   | 'a' :: 'n' :: 'd' :: tl when is_word_end tl ->
       loop

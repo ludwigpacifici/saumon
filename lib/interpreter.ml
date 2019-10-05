@@ -1,5 +1,6 @@
 open Omnipresent
 
+(* TODO: Errors should be reviewed *)
 type error =
   { location : Location.t
   ; where : string
@@ -37,31 +38,46 @@ let evaluate_binary_string (l : string) (t : Token.t) (r : string) :
         ; message = "Unknown binary operator to be used with two strings" }
 
 let rec evaluate (env : Environment.t) (e : Ast.expression) :
-    (Value.t, error) Result.t =
+    (Environment.t * Value.t, error) Result.t =
   match e with
   | Ast.Literal l -> evaluate_literal env l
   | Ast.Grouping (_, e, _) -> evaluate env e
   | Ast.Unary (t, e) -> evaluate_unary env t e
   | Ast.Binary (l, t, r) -> evaluate_binary env l t r
+  | Ast.Assignment (Ast.Identifier id, equal, expression) ->
+      if Environment.contains ~env ~id then
+        evaluate env expression
+        |> Result.map ~f:(fun (env, value) ->
+               (Environment.define ~env ~id value, value))
+      else
+        Error
+          { location = equal.location
+          ; where = id
+          ; message = "Undefined variable '" ^ id ^ "'" }
+  | Ast.Assignment (_, equal, _) ->
+      Error
+        { location = equal.location
+        ; where = Token_kind.to_string equal.kind
+        ; message = "Expected to have an identifer on the left of '='" }
 
 and evaluate_literal (env : Environment.t) (l : Ast.literal) :
-    (Value.t, error) Result.t =
+    (Environment.t * Value.t, error) Result.t =
   match l with
   | Ast.Identifier id -> (
     (* Value.of_ast_literal does not resolve literal identifier *)
     match Environment.get ~env ~id with
-    | Some v -> Ok v
+    | Some v -> Ok (env, v)
     | None ->
         Error
           { location = Location.make ~line:0 ~column:0
           ; where = id
           ; message = "Undefined variable: " ^ id } )
-  | l -> Ok (Value.of_ast_literal l)
+  | l -> Ok (env, Value.of_ast_literal l)
 
 and evaluate_unary (env : Environment.t) (t : Token.t) (e : Ast.expression) :
-    (Value.t, error) Result.t =
+    (Environment.t * Value.t, error) Result.t =
   match (t.kind, evaluate env e) with
-  | Token_kind.Minus, Ok (Value.Number e) -> Ok (Value.Number (-.e))
+  | Token_kind.Minus, Ok (env, Value.Number e) -> Ok (env, Value.Number (-.e))
   | Token_kind.Minus, Ok _ ->
       Error
         { location = t.location
@@ -69,9 +85,9 @@ and evaluate_unary (env : Environment.t) (t : Token.t) (e : Ast.expression) :
         ; message = "Expected a float after a unary minus" }
   (* Lox follows Ruby’s simple rule: false and nil are falsey and everything
      else is truthy. *)
-  | Token_kind.Bang, Ok (Value.Bool false) -> Ok (Value.Bool true)
-  | Token_kind.Bang, Ok Value.Nil -> Ok (Value.Bool true)
-  | Token_kind.Bang, _ -> Ok (Value.Bool false)
+  | Token_kind.Bang, Ok (env, Value.Bool false) -> Ok (env, Value.Bool true)
+  | Token_kind.Bang, Ok (env, Value.Nil) -> Ok (env, Value.Bool true)
+  | Token_kind.Bang, _ -> Ok (env, Value.Bool false)
   | t_kind, _ ->
       Error
         { location = t.location
@@ -82,13 +98,16 @@ and evaluate_binary
     (env : Environment.t)
     (l : Ast.expression)
     (t : Token.t)
-    (r : Ast.expression) : (Value.t, error) Result.t =
+    (r : Ast.expression) : (Environment.t * Value.t, error) Result.t =
   match (evaluate env l, t.kind, evaluate env r) with
-  | Ok l, Token_kind.Equal_equal, Ok r -> Ok (Value.Bool (Value.equal l r))
-  | Ok l, Token_kind.Bang_equal, Ok r ->
-      Ok (Value.Bool (Value.equal l r |> not))
-  | Ok (Value.Number l), _, Ok (Value.Number r) -> evaluate_binary_number l t r
-  | Ok (Value.String l), _, Ok (Value.String r) -> evaluate_binary_string l t r
+  | Ok (_, l), Token_kind.Equal_equal, Ok (_, r) ->
+      Ok (env, Value.Bool (Value.equal l r))
+  | Ok (_, l), Token_kind.Bang_equal, Ok (_, r) ->
+      Ok (env, Value.Bool (Value.equal l r |> not))
+  | Ok (_, Value.Number l), _, Ok (_, Value.Number r) ->
+      evaluate_binary_number l t r |> Result.map ~f:(fun v -> (env, v))
+  | Ok (_, Value.String l), _, Ok (_, Value.String r) ->
+      evaluate_binary_string l t r |> Result.map ~f:(fun v -> (env, v))
   | Ok _, t_kind, Ok _ ->
       Error
         { location = t.location
@@ -113,17 +132,18 @@ and evaluate_binary
         ; message = "Not able to evaluate both left and right expression" }
 
 let execute_statement (env : Environment.t) (s : Ast.statement) :
-    (Value.t option, error) Result.t =
+    (Environment.t * Value.t option, error) Result.t =
   match s with
   | Ast.Expression_statement (e, _) ->
       evaluate env e
-      |> Result.bind ~f:(fun _ ->
+      |> Result.bind ~f:(fun (env, _value) ->
              (* Evaluate the expression in case of errors, but discard on
                 purpose the computed value because there is no print statement
-                for it *)
-             Ok None)
+                for it. Forward the environment because it can be updated by an
+                assignment. *)
+             Ok (env, None))
   | Ast.Print_statement (_, e, _) ->
-      evaluate env e |> Result.bind ~f:(fun v -> Ok (Some v))
+      evaluate env e |> Result.bind ~f:(fun (env, v) -> Ok (env, Some v))
 
 let execute_variable_declaration
     (env : Environment.t)
@@ -133,7 +153,8 @@ let execute_variable_declaration
       (* A variable not explicitly initialized is implicitely set to "nil" *)
       Environment.define ~env ~id Value.Nil |> Result.return
   | _, Ast.Identifier id, Some (_, e), _ ->
-      evaluate env e |> Result.map ~f:(Environment.define ~env ~id)
+      evaluate env e
+      |> Result.map ~f:(fun (env, value) -> Environment.define ~env ~id value)
   | t, _, _, _ ->
       Error
         { location = t.location
@@ -146,24 +167,23 @@ let extract_values
   match d with
   | Ast.Statement s ->
       execute_statement env s
-      |> Result.bind
-           ~f:
-             ( Option.map ~f:(fun v -> v :: vs)
-             >> Option.value ~default:vs >> Result.return
-             >> Result.map ~f:(fun vs -> (env, vs)) )
+      |> Result.bind ~f:(fun (env, v) ->
+             Option.map v ~f:(fun v -> v :: vs)
+             |> Option.value ~default:vs |> Result.return
+             |> Result.map ~f:(fun vs -> (env, vs)))
   | Ast.Variable_declaration v ->
       execute_variable_declaration env v
       |> Result.map ~f:(fun env -> (env, vs))
 
-let stdout_print ((_ : Environment.t), (vs : Value.t list)) : unit =
+let stdout_print (_ : Environment.t) (vs : Value.t list) : unit =
   List.iter vs ~f:(Value.to_string >> Core.Out_channel.print_endline)
 
 let execute_k
-    ~(k : Environment.t * Value.t list -> unit)
+    ~(k : Environment.t -> Value.t list -> unit)
     (env : Environment.t)
     (program : Ast.Program.t) : (unit, error) Result.t =
   List.fold_result ~init:(env, []) ~f:extract_values (Ast.Program.get program)
-  |> Result.map ~f:k
+  |> Result.map ~f:(fun (env, vs) -> k env (List.rev vs))
 
 let execute (env : Environment.t) (program : Ast.Program.t) :
     (unit, error) Result.t =

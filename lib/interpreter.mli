@@ -6,13 +6,15 @@ type error =
 
 open Base
 
-(* Evaluate an expression and return its reduced form as `Value.t` *)
-val evaluate : Environment.t -> Ast.expression -> (Value.t, error) Result.t
+(* Evaluate an expression and return its reduced form as `Value.t` and the
+   updated Environment *)
+val evaluate :
+  Environment.t -> Ast.expression -> (Environment.t * Value.t, error) Result.t
 
 (* Execute a program with a given environment. The continuation enables custom
    behavior (for example, usefull for testing) to process the program steps. *)
 val execute_k :
-     k:(Environment.t * Value.t list -> unit)
+     k:(Environment.t -> Value.t list -> unit)
   -> Environment.t
   -> Ast.Program.t
   -> (unit, error) Result.t
