@@ -6,6 +6,7 @@
 
 * Learn about compiler front ends and interpreters.
 * Play and learn with OCaml and its ecosystem. Note, this implementation diverge slightly from the book ; OCaml idiomatic code is quite different from Java (used for the original implementation).
+* Keep the same learning philosophy as in the [book](http://www.craftinginterpreters.com/introduction.html#the-code): abstain of using tools like Lex or Yacc and do "everything by hand".
 
 ## Build
 

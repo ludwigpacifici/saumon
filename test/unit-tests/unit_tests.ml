@@ -5,4 +5,5 @@ let () =
     ; ("Parser statement tests", Parser_statement_tests.all)
     ; ("Parser declaration tests", Parser_declaration_tests.all)
     ; ("Interpreter expression tests", Interpreter_expression_tests.all)
-    ; ("Interpreter statement tests", Interpreter_statement_tests.all) ]
+    ; ("Interpreter statement tests", Interpreter_statement_tests.all)
+    ; ("Environment tests", Environment_tests.all) ]

@@ -47,8 +47,16 @@ let rec evaluate (env : Environment.t) (e : Ast.expression) :
   | Ast.Assignment (Ast.Identifier id, equal, expression) ->
       if Environment.contains ~env ~id then
         evaluate env expression
-        |> Result.map ~f:(fun (env, value) ->
-               (Environment.define ~env ~id value, value))
+        |> Result.bind ~f:(fun (env, value) ->
+               match Environment.assign ~env ~id value with
+               | Some env -> Ok (env, value)
+               | None ->
+                   Error
+                     { location = equal.location
+                     ; where = id
+                     ; message =
+                         "Unable to do assignement for " ^ id
+                         ^ " even though it is already defined." })
       else
         Error
           { location = equal.location
