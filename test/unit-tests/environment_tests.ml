@@ -12,17 +12,20 @@ let environment_empty () =
 let environment_with_empty_scopes () =
   Environment.empty ()
   |> (fun env -> Environment.push_scope ~env)
-  |> Environment.is_empty |> check_bool true
+  |> Environment.is_empty
+  |> check_bool true
 
 let get_unknown_value_is_none () =
   Environment.empty ()
   |> (fun env -> Environment.get ~env ~id:"unknown")
-  |> Option.is_none |> check_bool true
+  |> Option.is_none
+  |> check_bool true
 
 let pop_empty_environment_is_none () =
   Environment.empty ()
   |> (fun env -> Environment.pop_scope ~env)
-  |> Option.is_none |> check_bool true
+  |> Option.is_none
+  |> check_bool true
 
 let define_and_get_value () =
   let id = "x" in
@@ -95,7 +98,8 @@ let declare_assign_with_different_scope () =
 
 let assign_without_declaration_fails () =
   Environment.assign ~env:(Environment.empty ()) ~id:"x" (Value.Number 42.)
-  |> Option.is_none |> check_bool true
+  |> Option.is_none
+  |> check_bool true
 
 let all =
   [ Alcotest.test_case "Environment empty" `Quick environment_empty

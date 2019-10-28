@@ -20,7 +20,9 @@ let assign ~(env : t) ~(id : string) (value : Value.t) : t option =
     match env with
     | e :: es when Map.mem e id ->
         Map.update e id ~f:(function None -> value | Some _ -> value)
-        |> Fn.flip List.cons acc |> List.rev |> Fn.flip List.append es
+        |> Fn.flip List.cons acc
+        |> List.rev
+        |> Fn.flip List.append es
         |> Option.return
     | e :: es -> aux (e :: acc) es
     | [] -> (* Sad path: no declaration found in any scopes*) None

@@ -8,3 +8,4 @@ wrap-comments = true
 doc-comments = before
 break-fun-decl = fit-or-vertical
 break-fun-sig = fit-or-vertical
+break-infix = fit-or-vertical

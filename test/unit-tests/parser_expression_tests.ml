@@ -22,7 +22,9 @@ let parse_with_semicolon ts =
 (* Helper that assert a token list will be parsed as the given expression *)
 let assert_parse ts expected_expression =
   check_parse (parse_with_semicolon ts)
-    ( expected_expression |> statement_of_expression |> Ast.Program.of_statement
+    ( expected_expression
+    |> statement_of_expression
+    |> Ast.Program.of_statement
     |> Result.return )
 
 (* Helper that assert a token list will be parsed and generate errors *)

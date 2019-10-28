@@ -14,7 +14,9 @@ let check_true = Alcotest.(check bool) "check Interpreter.execute_k" true
    comprehensives tests. Raise `invalid_arg` either when the scanner or the
    parser fails. *)
 let make_program_exn (str : string) : Ast.Program.t =
-  Scanner.scan_tokens str |> Caml.Result.get_ok |> Parser.parse
+  Scanner.scan_tokens str
+  |> Caml.Result.get_ok
+  |> Parser.parse
   |> Caml.Result.get_ok
 
 (* Execute a program always with an empty environment. Useful for brief and
@@ -34,7 +36,8 @@ let print_number () =
   |> execute_with_empty_env ~k:(fun env vs ->
          check_true (Environment.is_empty env) ;
          check_value_list vs [Value.Number value])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let print_string () =
   let value = "hello" in
@@ -42,45 +45,52 @@ let print_string () =
   |> execute_with_empty_env ~k:(fun env vs ->
          check_true (Environment.is_empty env) ;
          check_value_list vs [Value.String value])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let print_bool value () =
   make_program_exn ("print " ^ Bool.to_string value ^ ";")
   |> execute_with_empty_env ~k:(fun env vs ->
          check_true (Environment.is_empty env) ;
          check_value_list vs [Value.Bool value])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let print_nil () =
   make_program_exn "print nil;"
   |> execute_with_empty_env ~k:(fun env vs ->
          check_true (Environment.is_empty env) ;
          check_value_list vs [Value.Nil])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let print_expression () =
   make_program_exn "print 2 + 2;"
   |> execute_with_empty_env ~k:(fun env vs ->
          check_true (Environment.is_empty env) ;
          check_value_list vs [Value.Number 4.])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let discard_expression () =
   make_program_exn "2;"
   |> execute_with_empty_env ~k:(fun env vs ->
          check_true (Environment.is_empty env) ;
          check_value_list vs [])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let bad_expression () =
   make_program_exn "2 + nil;"
   |> execute_with_empty_env ~k:ignore2
-  |> Result.is_error |> check_true
+  |> Result.is_error
+  |> check_true
 
 let bad_print () =
   make_program_exn "print 2 + nil;"
   |> execute_with_empty_env ~k:ignore2
-  |> Result.is_error |> check_true
+  |> Result.is_error
+  |> check_true
 
 let declare_variable_without_initialization () =
   let id = "x" in
@@ -88,7 +98,8 @@ let declare_variable_without_initialization () =
   |> execute_with_empty_env ~k:(fun env vs ->
          check_option_value (Environment.get ~env ~id) (Some Value.Nil) ;
          check_value_list vs [])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let declare_variable_with_initialization () =
   let id = "x" in
@@ -98,24 +109,32 @@ let declare_variable_with_initialization () =
          check_option_value (Environment.get ~env ~id)
            (Some (Value.Number value)) ;
          check_value_list vs [])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let declare_variable_with_expression () =
   let id = "x" in
   let value = 42. in
   make_program_exn
-    ( "var " ^ id ^ " = " ^ Float.to_string value ^ " + "
-    ^ Float.to_string value ^ ";" )
+    ( "var "
+    ^ id
+    ^ " = "
+    ^ Float.to_string value
+    ^ " + "
+    ^ Float.to_string value
+    ^ ";" )
   |> execute_with_empty_env ~k:(fun env vs ->
          check_option_value (Environment.get ~env ~id)
            (Some (Value.Number (value +. value))) ;
          check_value_list vs [])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let bad_initialized_variable_declaration () =
   make_program_exn "var x = 2 + nil;"
   |> execute_with_empty_env ~k:ignore2
-  |> Result.is_error |> check_true
+  |> Result.is_error
+  |> check_true
 
 let declare_variable_and_print () =
   let id = "x" in
@@ -126,7 +145,8 @@ let declare_variable_and_print () =
          let v = Value.Number value in
          check_option_value (Environment.get ~env ~id) (Some v) ;
          check_value_list vs [v])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let declare_variable_and_shadow () =
   let id = "x" in
@@ -137,25 +157,36 @@ let declare_variable_and_shadow () =
          check_option_value (Environment.get ~env ~id)
            (Some (Value.Number value)) ;
          check_value_list vs [])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let declare_variable_and_assign () =
   let id = "x" in
   let value = 42. in
   make_program_exn
-    ( "var " ^ id ^ " = "
+    ( "var "
+    ^ id
+    ^ " = "
     ^ Float.to_string (value +. 1.)
-    ^ "; " ^ id ^ " = " ^ Float.to_string value ^ "; print " ^ id ^ ";" )
+    ^ "; "
+    ^ id
+    ^ " = "
+    ^ Float.to_string value
+    ^ "; print "
+    ^ id
+    ^ ";" )
   |> execute_with_empty_env ~k:(fun env vs ->
          let v = Value.Number value in
          check_option_value (Environment.get ~env ~id) (Some v) ;
          check_value_list vs [v])
-  |> Result.is_ok |> check_true
+  |> Result.is_ok
+  |> check_true
 
 let initialized_variable_without_declaration () =
   make_program_exn "x = 2;"
   |> execute_with_empty_env ~k:ignore2
-  |> Result.is_error |> check_true
+  |> Result.is_error
+  |> check_true
 
 let all =
   [ Alcotest.test_case "Print number" `Quick print_number

@@ -160,7 +160,8 @@ let declaration (ts : Token.t list) :
                | token :: _ ->
                    Error
                      ( [ "';' or '=' is expected to declare a variable \
-                          without or with a value after: " ^ raw_identifier ]
+                          without or with a value after: "
+                         ^ raw_identifier ]
                      , Some token )
                | [] ->
                    Error

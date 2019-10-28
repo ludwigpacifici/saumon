@@ -67,7 +67,8 @@ let rec loop location tokens = function
   | '/' :: '/' :: tl ->
       (* Discard data up to the end of the line or EOF *)
       List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl
-      |> snd |> loop location tokens
+      |> snd
+      |> loop location tokens
   | '/' :: tl ->
       loop
         (Location.next_column location 1)

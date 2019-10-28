@@ -1,5 +1,5 @@
 (** An environment represents bindings between a variable and its value. It's
-    scope aware (delimited with `{...}`). *)
+    scope aware (delimited with "\{ ... \}"). *)
 type t
 
 (** Create an empty environment. *)

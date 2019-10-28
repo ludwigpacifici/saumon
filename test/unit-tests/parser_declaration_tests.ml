@@ -21,7 +21,8 @@ let valid_declaration_with_no_initialization () =
   check_parse
     (Parser.parse [var; identifier; semicolon])
     ( (var, Ast.Identifier raw_identifier, None, semicolon)
-    |> Ast.Program.of_declaration |> Result.return )
+    |> Ast.Program.of_declaration
+    |> Result.return )
 
 let equal = Token.of_token_kind ~kind:Token_kind.Equal
 
@@ -36,7 +37,8 @@ let valid_declaration_with_initialization () =
       , Ast.Identifier raw_identifier
       , Some (equal, Ast.Literal (Ast.Number raw_value))
       , semicolon )
-    |> Ast.Program.of_declaration |> Result.return )
+    |> Ast.Program.of_declaration
+    |> Result.return )
 
 let plus = Token.of_token_kind ~kind:Token_kind.Plus
 
@@ -53,7 +55,8 @@ let valid_declaration_with_expression () =
                 ; location = {Location.line = 1; column = 0} }
               , Ast.Literal (Ast.Number 5.) ) )
       , semicolon )
-    |> Ast.Program.of_declaration |> Result.return )
+    |> Ast.Program.of_declaration
+    |> Result.return )
 
 let no_declaration () = check_parse (Parser.parse []) (Ok Ast.Program.empty)
 

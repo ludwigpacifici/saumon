@@ -55,7 +55,8 @@ let rec evaluate (env : Environment.t) (e : Ast.expression) :
                      { location = equal.location
                      ; where = id
                      ; message =
-                         "Unable to do assignement for " ^ id
+                         "Unable to do assignement for "
+                         ^ id
                          ^ " even though it is already defined." })
       else
         Error
@@ -177,7 +178,8 @@ let extract_values
       execute_statement env s
       |> Result.bind ~f:(fun (env, v) ->
              Option.map v ~f:(fun v -> v :: vs)
-             |> Option.value ~default:vs |> Result.return
+             |> Option.value ~default:vs
+             |> Result.return
              |> Result.map ~f:(fun vs -> (env, vs)))
   | Ast.Variable_declaration v ->
       execute_variable_declaration env v
