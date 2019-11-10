@@ -38,3 +38,7 @@ print 1 == 2; // false
 print "cat" != "dog"; // true
 print 314 == "pi"; // false
 print 123 == "123"; // false
+
+// Logical operators
+print !true;
+print !false;

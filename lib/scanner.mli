@@ -1,6 +1,5 @@
 type error =
   { location : Location.t
-  ; where : string
   ; message : string }
 [@@deriving show, eq]
 

@@ -8,27 +8,13 @@
 * Play and learn with OCaml and its ecosystem. Note, this implementation diverge slightly from the book ; OCaml idiomatic code is quite different from Java (used for the original implementation).
 * Keep the same learning philosophy as in the [book](http://www.craftinginterpreters.com/introduction.html#the-code): abstain of using tools like Lex or Yacc and do "everything by hand".
 
-## Build
+## Build and tests
 
-With [Dune](https://dune.build/):
+Build with [Dune](https://dune.build/):
 
 ```bash
 $ dune build @install
 $ dune exec saumon
-```
-
-## Tests
-
-```bash
-$ dune runtest
-```
-
-## Usage
-
-To use saumon in interactive mode, simply run
-
-```bash
-$ saumon
 ```
 
 Install with Opam:
@@ -36,6 +22,26 @@ Install with Opam:
 ```bash
 $ # cd project/root/folder
 $ opam install .
+```
+
+Test with:
+
+```bash
+$ dune runtest
+```
+
+## Usage
+
+To use saumon in interactive mode, simply run:
+
+```bash
+$ saumon
+```
+
+To interpret a file, use:
+
+```bash
+$ saumon <filename>
 ```
 
 ## Continuous Integration [![Build Status](https://travis-ci.org/ludwigpacifici/saumon.svg?branch=master)](https://travis-ci.org/ludwigpacifici/saumon)

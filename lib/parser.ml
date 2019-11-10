@@ -97,8 +97,7 @@ and primary (ts : Token.t list) : (Ast.expression ok, error) Result.t =
 let expression_statement (ts : Token.t list) :
     (Ast.expression_statement ok, error) Result.t =
   let expect_semicolon = function
-    | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts ->
-        Ok (semicolon, ts)
+    | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts -> Ok (semicolon, ts)
     | t :: _ -> Error (["Expected a semicolon after parsed expression"], Some t)
     | [] ->
         Error
@@ -110,19 +109,37 @@ let expression_statement (ts : Token.t list) :
          expect_semicolon ts
          |> Result.map ~f:(fun (semicolon, ts) -> ((e, semicolon), ts)))
 
-let statement (ts : Token.t list) : (Ast.statement option ok, error) Result.t =
+let rec block (open_brace : Token.t) (ts : Token.t list) :
+    (Ast.block ok, error) Result.t =
+  let rec aux acc = function
+    | ({kind = Token_kind.Right_brace; _} as close_brace) :: ts ->
+        Ok ((open_brace, List.rev acc, close_brace), ts)
+    | [] -> Error (["Unexpected end of file. Missing closing brace '}'."], None)
+    | [({kind = Token_kind.Eof; _} as t)] ->
+        Error (["Unexpected end of file. Missing closing brace '}'."], Some t)
+    | ts ->
+        declaration ts
+        |> Result.bind ~f:(fun (d, ts) ->
+               match d with Some d -> aux (d :: acc) ts | None -> aux acc ts)
+  in
+  aux [] ts
+
+and statement (ts : Token.t list) : (Ast.statement option ok, error) Result.t =
   match ts with
   | {kind = Token_kind.Semicolon; _} :: ts -> Ok (None, ts)
   | ({kind = Token_kind.Print; _} as print) :: ts ->
       expression_statement ts
       |> Result.map ~f:(fun ((e, semicolon), ts) ->
              (Some (Ast.Print_statement (print, e, semicolon)), ts))
+  | ({kind = Token_kind.Left_brace; _} as new_block) :: ts ->
+      block new_block ts
+      |> Result.map ~f:(fun (block, ts) -> (Some (Ast.Block block), ts))
   | ts ->
       expression_statement ts
       |> Result.map ~f:(fun ((e, semicolon), ts) ->
              (Some (Ast.Expression_statement (e, semicolon)), ts))
 
-let declaration (ts : Token.t list) :
+and declaration (ts : Token.t list) :
     (Ast.declaration option ok, error) Result.t =
   match ts with
   | [] | [{kind = Token_kind.Eof; _}] -> Ok (None, [])
@@ -159,8 +176,8 @@ let declaration (ts : Token.t list) :
                      , ts )
                | token :: _ ->
                    Error
-                     ( [ "';' or '=' is expected to declare a variable \
-                          without or with a value after: "
+                     ( [ "';' or '=' is expected to declare a variable without \
+                          or with a value after: "
                          ^ raw_identifier ]
                      , Some token )
                | [] ->

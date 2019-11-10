@@ -1,32 +1,35 @@
-(* program ::= declaration * EOF
+(* program ::= declaration * EOF ;
  *
  * declaration ::= variable_declaration
- *               | statement
+ *               | statement ;
  *
  * variable_declaration ::= "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * statement ::= expression_statement
  *             | print_statement
+ *             | block ;
  *
- * expression_statement ::= expression ";"
+ * block ::= "{" declaration* "}" ;
  *
- * print_statement ::= "print" expression ";"
+ * expression_statement ::= expression ";" ;
  *
- * expression ::= assignment ;
+ * print_statement ::= "print" expression ";" ;
  *
- * assignment ::= IDENTIFIER "=" assignment
+ * expression ::= assignment o
+ *
+ * assignment ::= IDENTIFIER "=" assignment ;
  *               | equality ;
  *
- * equality ::= comparison ( ( "!=" | "==" ) comparison )*
+ * equality ::= comparison ( ( "!=" | "==" ) comparison )* ;
  *
- * comparison ::= addition ( ( ">" | ">=" | "<" | "<=" ) addition )*
+ * comparison ::= addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
  *
- * addition ::= multiplication ( ( "-" | "+" ) multiplication )*
+ * addition ::= multiplication ( ( "-" | "+" ) multiplication )* ;
  *
- * multiplication ::= unary ( ( "/" | "*" ) unary )*
+ * multiplication ::= unary ( ( "/" | "*" ) unary )* ;
  *
  * unary ::= ( "!" | "-" ) unary
- *         | primary
+ *         | primary ;
  *
  * primary ::= NUMBER
  *           | STRING
@@ -34,7 +37,7 @@
  *           | "true"
  *           | "nil"
  *           | "(" expression ")"
- *           | IDENTIFIER
+ *           | IDENTIFIER ;
  *)
 
 type expression =
@@ -55,7 +58,7 @@ and unary = Token.t * expression
 
 and binary = expression * Token.t * expression
 
-and grouping = Token.t * expression * Token.t [@@deriving show, eq]
+and grouping = Token.t * expression * Token.t
 
 and assignment =
   (* Constantly equal to token_kind.Identifier *)
@@ -77,11 +80,6 @@ type print_statement =
     Token.t
 [@@deriving show, eq]
 
-type statement =
-  | Expression_statement of expression_statement
-  | Print_statement of print_statement
-[@@deriving show, eq]
-
 type variable_declaration =
   (* Constantly equal to token_kind.Var, i.e. "var" *)
   Token.t
@@ -96,6 +94,18 @@ type variable_declaration =
 type declaration =
   | Variable_declaration of variable_declaration
   | Statement of statement
+
+and statement =
+  | Expression_statement of expression_statement
+  | Print_statement of print_statement
+  | Block of block
+
+and block =
+  (* Constantly equal to token_kind.Left_brace. *)
+  Token.t
+  * declaration list
+  * (* Constantly equal to token_kind.Right_brace. *)
+    Token.t
 [@@deriving show, eq]
 
 module Program = struct

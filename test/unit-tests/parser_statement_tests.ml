@@ -8,8 +8,7 @@ let check_parse =
 
 let check_true = Alcotest.(check bool) "check Parser.parse" true
 
-let noop_when_no_token () =
-  check_parse (Parser.parse []) (Ok Ast.Program.empty)
+let noop_when_no_token () = check_parse (Parser.parse []) (Ok Ast.Program.empty)
 
 let noop_when_eof () =
   check_parse

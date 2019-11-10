@@ -23,7 +23,7 @@ let print_parser ast =
 
 let print_scanner_errors =
   List.iter ~f:(fun (x : Scanner.error) ->
-      Display.error x.location ~where:x.where ~message:x.message)
+      Display.error x.location ~message:x.message)
 
 let print_parser_errors (errs, t) =
   List.iter errs ~f:Out_channel.print_endline ;
@@ -32,7 +32,7 @@ let print_parser_errors (errs, t) =
 
 let print_interpreter_errors (err : Interpreter.error) =
   Out_channel.print_endline "[INTERPRETER]" ;
-  Display.error err.location ~where:err.where ~message:err.message
+  Display.error err.location ~message:err.message
 
 let start args data =
   let exit_code =

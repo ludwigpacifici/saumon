@@ -1,1 +1,1 @@
-val error : Location.t -> where:string -> message:string -> unit
+val error : Location.t -> message:string -> unit

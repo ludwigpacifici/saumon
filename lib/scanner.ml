@@ -2,7 +2,6 @@ open Base
 
 type error =
   { location : Location.t
-  ; where : string
   ; message : string }
 [@@deriving show, eq]
 
@@ -211,9 +210,7 @@ let rec loop location tokens = function
         tl
   | c :: tl when Char.equal '"' c ->
       (* Note the first '"' is discarded *)
-      let str, tl =
-        List.split_while ~f:(fun c -> Char.compare '"' c <> 0) tl
-      in
+      let str, tl = List.split_while ~f:(fun c -> Char.compare '"' c <> 0) tl in
       let str = String.of_char_list str in
       loop
         (* Take into consideration the two '"' *)
@@ -229,11 +226,8 @@ let rec loop location tokens = function
       let len = String.length raw_number in
       let token =
         ( try Ok (Float.of_string raw_number)
-          with _ ->
-            Error
-              [ { location
-                ; where = raw_number
-                ; message = "Expected to parse a float." } ] )
+          with _ -> Error [{location; message = "Expected to parse a float."}]
+        )
         |> Result.map ~f:(fun n ->
                Token.make ~kind:(Token_kind.Number n) ~location)
       in
@@ -243,7 +237,7 @@ let rec loop location tokens = function
         tl
   | c :: tl ->
       let err =
-        Error [{location; where = String.of_char c; message = "Unknown input"}]
+        Error [{location; message = "Unknown input: " ^ String.of_char c}]
       in
       loop
         (Location.next_column location 1)

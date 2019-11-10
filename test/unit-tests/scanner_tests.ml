@@ -379,11 +379,9 @@ let scan_error () =
   check (Scanner.scan_tokens "``")
     (Error
        [ { location = Location.make ~line:1 ~column:0
-         ; where = "`"
-         ; message = "Unknown input" }
+         ; message = "Unknown input: `" }
        ; { location = Location.make ~line:1 ~column:1
-         ; where = "`"
-         ; message = "Unknown input" } ])
+         ; message = "Unknown input: `" } ])
 
 let all =
   [ Alcotest.test_case "Scan empty" `Quick scan_empty
