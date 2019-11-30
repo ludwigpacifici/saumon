@@ -2,9 +2,13 @@ open Core
 
 let ps1 elapsed errored counter exe_name =
   let l1 =
-    "┏━━┫ ⮝ elapsed: " ^ elapsed ^ " ┣━━┫ ⮝ errored: "
-    ^ Bool.to_string errored ^ " ┣━━┫ counter: "
-    ^ Int.to_string counter ^ " ┃"
+    "┏━━┫ ⮝ elapsed: "
+    ^ elapsed
+    ^ " ┣━━┫ ⮝ errored: "
+    ^ Bool.to_string errored
+    ^ " ┣━━┫ counter: "
+    ^ Int.to_string counter
+    ^ " ┃"
   in
   let l2 = "┗ " ^ exe_name ^ " ><> " in
   Out_channel.print_endline l1 ;

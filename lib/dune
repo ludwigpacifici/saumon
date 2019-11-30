@@ -2,4 +2,5 @@
  (name saumon)
  (libraries core)
  (inline_tests)
- (preprocess (pps ppx_inline_test ppx_deriving.show ppx_deriving.make ppx_deriving.eq)))
+ (preprocess
+  (pps ppx_inline_test ppx_deriving.show ppx_deriving.make ppx_deriving.eq)))

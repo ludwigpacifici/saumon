@@ -114,8 +114,7 @@ let evaluate_binary () =
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
-       (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast)))
+       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast)))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate

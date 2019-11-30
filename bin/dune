@@ -1,8 +1,10 @@
 (executables
  (names main)
  (libraries core saumon)
- (preprocess (pps ppx_jane ppx_deriving.enum)))
+ (preprocess
+  (pps ppx_jane ppx_deriving.enum)))
 
 (install
  (section bin)
- (files (main.exe as saumon)))
+ (files
+  (main.exe as saumon)))
