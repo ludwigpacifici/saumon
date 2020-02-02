@@ -30,5 +30,5 @@ let command exe_name =
         resolve_in_channel filename ||> main_exn exe_name args |> exit)
 
 let () =
-  let exe_name = Filename.basename Sys.argv.(0) in
+  let exe_name = Filename.basename (Sys.get_argv ()).(0) in
   Command.run (command exe_name)

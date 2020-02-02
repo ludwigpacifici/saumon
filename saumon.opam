@@ -20,9 +20,9 @@ build: [
 
 depends: [
   "alcotest" {with-test & >= "0.8"}
-  "core" {>= "v0.12"}
+  "core" {>= "v0.13"}
   "dune" {build}
-  "ocaml" {>= "4.02"}
+  "ocaml" {>= "4.08"}
   "ppx_deriving" {>= "4.2.1"}
-  "ppx_jane" {>= "v0.12"}
+  "ppx_jane" {>= "v0.13"}
 ]
