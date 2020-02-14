@@ -25,11 +25,6 @@ let print_scanner_errors =
   List.iter ~f:(fun (x : Scanner.error) ->
       Display.error x.location ~message:x.message)
 
-let print_parser_errors (errs, t) =
-  List.iter errs ~f:Out_channel.print_endline ;
-  let t = Option.map t ~f:Token.show |> Option.value ~default:"<None>" in
-  Out_channel.print_endline ("Token: " ^ t)
-
 let print_interpreter_errors (err : Interpreter.error) =
   Out_channel.print_endline "[INTERPRETER]" ;
   Display.error err.location ~message:err.message
@@ -48,7 +43,8 @@ let start args data =
         ~f:
           ( Parser.parse
           >> Result.map_error ~f:(fun err ->
-                 print_parser_errors err ; ParserError) )
+                 Out_channel.print_endline err ;
+                 ParserError) )
     in
     Result.iter ast ~f:(fun ast -> if args.print_parser then print_parser ast) ;
     Result.bind ast

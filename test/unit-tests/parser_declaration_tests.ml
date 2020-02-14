@@ -3,8 +3,7 @@ open Saumon
 module A = Alcotest_testable
 
 let check_parse =
-  Alcotest.(check (result A.ast_program (pair (list string) (option A.token))))
-    "check Parser.parse"
+  Alcotest.(check (result A.ast_program string)) "check Parser.parse"
 
 let check_true = Alcotest.(check bool) "check Parser.parse" true
 

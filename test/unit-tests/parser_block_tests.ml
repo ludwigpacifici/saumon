@@ -5,8 +5,7 @@ module A = Alcotest_testable
 let check_true = Alcotest.(check bool) "check Parser.parse" true
 
 let check_parse =
-  Alcotest.(check (result A.ast_program (pair (list string) (option A.token))))
-    "check Parser.parse"
+  Alcotest.(check (result A.ast_program string)) "check Parser.parse"
 
 let left_brace = Token.of_token_kind ~kind:Token_kind.Left_brace
 

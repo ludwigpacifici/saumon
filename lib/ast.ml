@@ -1,4 +1,5 @@
-(* program ::= declaration * EOF ;
+(*
+ * program ::= declaration * EOF ;
  *
  * declaration ::= variable_declaration
  *               | statement ;
@@ -61,9 +62,9 @@ and binary = expression * Token.t * expression
 and grouping = Token.t * expression * Token.t
 
 and assignment =
-  (* Constantly equal to token_kind.Identifier *)
-  literal * (* Constantly equal to Identifier *)
-            Token.t * expression
+  literal (* Constantly equal to token_kind.Identifier *)
+  * Token.t (* Constantly equal to Identifier *)
+  * expression
 [@@deriving show, eq]
 
 type expression_statement =
@@ -73,20 +74,20 @@ type expression_statement =
 [@@deriving show, eq]
 
 type print_statement =
-  (* The suffix token is constantly equal to token_kind.Print, i.e. "print" *)
   Token.t
+  (* The suffix token is constantly equal to token_kind.Print, i.e. "print" *)
   * expression
   * (* The prefix token is constantly equal to token_kind.Semicolon, i.e. ";" *)
     Token.t
 [@@deriving show, eq]
 
 type variable_declaration =
-  (* Constantly equal to token_kind.Var, i.e. "var" *)
-  Token.t
-  * (* literal is of type identifier *)
-    literal
-  * (* Constantly equal to token_kind.Equal, i.e. "=" and an expression *)
-  (Token.t * expression) option
+  Token.t (* Constantly equal to token_kind.Var, i.e. "var" *)
+  * literal (* literal is of type identifier *)
+  * ( Token.t
+      (* Constantly equal to token_kind.Equal, i.e. "=" and an expression *)
+    * expression )
+    option
   * (* Constantly equal to token_kind.Semicolon , i.e. ";" *)
     Token.t
 [@@deriving show, eq]
