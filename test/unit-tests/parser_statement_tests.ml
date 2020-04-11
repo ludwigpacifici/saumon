@@ -23,8 +23,8 @@ let error_when_token_after_eof () =
 
 let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon
 
-let noop_when_semicolon () =
-  check_parse (Parser.parse [semicolon]) (Ok Ast.Program.empty)
+let error_when_semicolon () =
+  check_true (Parser.parse [semicolon] |> Result.is_error)
 
 let valid_expression_statement () =
   check_parse
@@ -56,7 +56,7 @@ let all =
   ; Alcotest.test_case "Noop when eof" `Quick noop_when_eof
   ; Alcotest.test_case "Error when token after eof" `Quick
       error_when_token_after_eof
-  ; Alcotest.test_case "Noop when semicolon" `Quick noop_when_semicolon
+  ; Alcotest.test_case "Error when semicolon" `Quick error_when_semicolon
   ; Alcotest.test_case "Valid expression statement" `Quick
       valid_expression_statement
   ; Alcotest.test_case "Semicolon missing after expression statement" `Quick

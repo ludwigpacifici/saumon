@@ -79,7 +79,7 @@ let expression_statement (ts : Token.t list) :
     (Ast.expression_statement ok, string) Result.t =
   let expect_semicolon = function
     | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts -> Ok (semicolon, ts)
-    | _ -> Error "Expected a semicolon ';' after parsed expression"
+    | _ -> Error "Expected an expression before ';'"
   in
   expression ts
   |> Result.bind ~f:(fun (e, ts) ->
@@ -92,32 +92,26 @@ let rec block (open_brace : Token.t) (ts : Token.t list) :
     | ({kind = Token_kind.Right_brace; _} as close_brace) :: ts ->
         Ok ((open_brace, List.rev acc, close_brace), ts)
     | [{kind = Token_kind.Eof; _}] | [] -> Error "Expected closing brace '}'."
-    | ts ->
-        declaration ts
-        |> Result.bind ~f:(fun (d, ts) ->
-               match d with Some d -> aux (d :: acc) ts | None -> aux acc ts)
+    | ts -> declaration ts |> Result.bind ~f:(fun (d, ts) -> aux (d :: acc) ts)
   in
   aux [] ts
 
-and statement (ts : Token.t list) : (Ast.statement option ok, string) Result.t =
+and statement (ts : Token.t list) : (Ast.statement ok, string) Result.t =
   match ts with
-  | {kind = Token_kind.Semicolon; _} :: ts -> Ok (None, ts)
   | ({kind = Token_kind.Print; _} as print) :: ts ->
       expression_statement ts
       |> Result.map ~f:(fun ((e, semicolon), ts) ->
-             (Some (Ast.Print_statement (print, e, semicolon)), ts))
+             (Ast.Print_statement (print, e, semicolon), ts))
   | ({kind = Token_kind.Left_brace; _} as new_block) :: ts ->
       block new_block ts
-      |> Result.map ~f:(fun (block, ts) -> (Some (Ast.Block block), ts))
+      |> Result.map ~f:(fun (block, ts) -> (Ast.Block block, ts))
   | ts ->
       expression_statement ts
       |> Result.map ~f:(fun ((e, semicolon), ts) ->
-             (Some (Ast.Expression_statement (e, semicolon)), ts))
+             (Ast.Expression_statement (e, semicolon), ts))
 
-and declaration (ts : Token.t list) :
-    (Ast.declaration option ok, string) Result.t =
+and declaration (ts : Token.t list) : (Ast.declaration ok, string) Result.t =
   match ts with
-  | [] | [{kind = Token_kind.Eof; _}] -> Ok (None, [])
   | ({kind = Token_kind.Var; _} as var) :: ts ->
       primary ts
       |> Result.bind ~f:(fun (e, ts) ->
@@ -131,12 +125,11 @@ and declaration (ts : Token.t list) :
                           , ({kind = Token_kind.Semicolon; _} as semicolon)
                             :: ts ) ->
                             Ok
-                              ( Some
-                                  (Ast.Variable_declaration
-                                     ( var
-                                     , identifier
-                                     , Some (equal, value)
-                                     , semicolon ))
+                              ( Ast.Variable_declaration
+                                  ( var
+                                  , identifier
+                                  , Some (equal, value)
+                                  , semicolon )
                               , ts )
                         | _ ->
                             Error
@@ -144,28 +137,21 @@ and declaration (ts : Token.t list) :
                                followed by a semicolon")
                | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts ->
                    Ok
-                     ( Some
-                         (Ast.Variable_declaration
-                            (var, identifier, None, semicolon))
+                     ( Ast.Variable_declaration
+                         (var, identifier, None, semicolon)
                      , ts )
                | _ -> Error "';' or '=' is expected to declare a variable." )
              | _ ->
                  Error
                    "A literal identifier after 'var' is expected to declare a \
                     variable name")
-  | ts ->
-      statement ts
-      |> Result.map ~f:(fun (s, ts) ->
-             (Option.map ~f:(fun s -> Ast.Statement s) s, ts))
+  | ts -> statement ts |> Result.map ~f:(fun (s, ts) -> (Ast.Statement s, ts))
 
 let rec loop (acc : Ast.declaration list) (ts : Token.t list) :
     (Ast.declaration list, string) Result.t =
   match ts with
-  | [] -> Ok acc
-  | ts ->
-      declaration ts
-      |> Result.bind ~f:(fun (x, ts) ->
-             match x with Some x -> loop (x :: acc) ts | None -> loop acc ts)
+  | [] | [{kind = Token_kind.Eof; _}] -> Ok acc
+  | ts -> declaration ts |> Result.bind ~f:(fun (x, ts) -> loop (x :: acc) ts)
 
 let parse (ts : Token.t list) : (Ast.Program.t, string) Result.t =
   let open Omnipresent in
