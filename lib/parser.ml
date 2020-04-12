@@ -105,10 +105,47 @@ and statement (ts : Token.t list) : (Ast.statement ok, string) Result.t =
   | ({kind = Token_kind.Left_brace; _} as new_block) :: ts ->
       block new_block ts
       |> Result.map ~f:(fun (block, ts) -> (Ast.Block block, ts))
+  | ({kind = Token_kind.If; _} as if_token)
+    :: ({kind = Token_kind.Left_paren; _} as left_paren) :: ts ->
+      if_statement if_token left_paren ts
+      |> Result.map ~f:(fun (parsed_if, ts) -> (Ast.If_statement parsed_if, ts))
   | ts ->
       expression_statement ts
-      |> Result.map ~f:(fun ((e, semicolon), ts) ->
-             (Ast.Expression_statement (e, semicolon), ts))
+      |> Result.map ~f:(fun (statement, ts) ->
+             (Ast.Expression_statement statement, ts))
+
+and if_statement (if_token : Token.t) (left_paren : Token.t) (ts : Token.t list)
+    : (Ast.if_statement ok, string) Result.t =
+  expression ts
+  |> Result.bind ~f:(fun (condition, ts) ->
+         match ts with
+         | ({kind = Token_kind.Right_paren; _} as right_paren) :: ts ->
+             statement ts
+             |> Result.bind ~f:(fun (if_body, ts) ->
+                    match ts with
+                    | ({kind = Token_kind.Else; _} as else_token) :: ts ->
+                        statement ts
+                        |> Result.bind ~f:(fun (else_body, ts) ->
+                               let parsed_if_else =
+                                 ( if_token
+                                 , left_paren
+                                 , condition
+                                 , right_paren
+                                 , if_body
+                                 , Some (else_token, else_body) )
+                               in
+                               Ok (parsed_if_else, ts))
+                    | ts ->
+                        let parsed_if =
+                          ( if_token
+                          , left_paren
+                          , condition
+                          , right_paren
+                          , if_body
+                          , None )
+                        in
+                        Ok (parsed_if, ts))
+         | _ -> Error "Expected ')' after if condition.")
 
 and declaration (ts : Token.t list) : (Ast.declaration ok, string) Result.t =
   match ts with

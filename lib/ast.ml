@@ -7,8 +7,11 @@
  * variable_declaration ::= "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * statement ::= expression_statement
+ *             | if_statement
  *             | print_statement
  *             | block ;
+ *
+ * if_statement ::= "if" "(" expression ")" statement ( "else" statement)? ;
  *
  * block ::= "{" declaration* "}" ;
  *
@@ -98,12 +101,20 @@ type declaration =
 
 and statement =
   | Expression_statement of expression_statement
+  | If_statement of if_statement
   | Print_statement of print_statement
   | Block of block
 
+and if_statement =
+  Token.t (* Constantly equal to token_kind.If. *)
+  * Token.t (* Constantly equal to token_kind.Left_paren. *)
+  * expression
+  * Token.t (* Constantly equal to token_kind.Right_paren. *)
+  * statement
+  * (Token.t (* Constantly equal to token_kind.Else. *) * statement) option
+
 and block =
-  (* Constantly equal to token_kind.Left_brace. *)
-  Token.t
+  Token.t (* Constantly equal to token_kind.Left_brace. *)
   * declaration list
   * (* Constantly equal to token_kind.Right_brace. *)
     Token.t

@@ -144,6 +144,16 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
                 for it. Forward the environment because it can be updated by an
                 assignment. *)
              Ok (env, None))
+  | Ast.If_statement
+      (_if, _left_paren, condition, _right_paren, if_body, else_branch) ->
+      evaluate env condition
+      |> Result.bind ~f:(fun (env, condition) ->
+             if Value.equal condition (Value.Bool true) then
+               execute_statement env if_body
+             else
+               match else_branch with
+               | None -> Ok (env, None)
+               | Some (_else, else_body) -> execute_statement env else_body)
   | Ast.Print_statement (_, e, _) ->
       evaluate env e |> Result.bind ~f:(fun (env, v) -> Ok (env, Some [v]))
   | Ast.Block (_, ds, end_block) -> execute_block env ds end_block

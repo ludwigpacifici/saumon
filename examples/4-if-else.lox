@@ -1,0 +1,23 @@
+// if branch prints "ok"
+if (true) print "yes";
+
+// nothing is executed
+if (false) print "error";
+
+// else branch prints "ok"
+if (false) print "error"; else print "oui";
+
+// else is bound to the nearest if statement
+if (true) if (false) print "error"; else print "da";
+
+// if branch with a block
+// prints:
+// hello
+// world
+if (true) { print "hello"; print "world"; }
+
+// if consume one statement
+// prints:
+// 1
+// 2
+if (true) print "1"; print "2";

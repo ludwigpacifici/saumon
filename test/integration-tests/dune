@@ -5,7 +5,6 @@
   (with-outputs-to
    %{target}
    (run %{bin:saumon} %{deps}))))
-
 (rule
  (alias runtest)
  (deps
@@ -21,7 +20,6 @@
   (with-outputs-to
    %{target}
    (run %{bin:saumon} %{deps}))))
-
 (rule
  (alias runtest)
  (deps
@@ -37,11 +35,25 @@
   (with-outputs-to
    %{target}
    (run %{bin:saumon} %{deps}))))
-
 (rule
  (alias runtest)
  (deps
   (:ref 3-scopes.lox.ref)
   (:out 3-scopes.lox.out))
+ (action
+  (diff %{ref} %{out})))
+
+(rule
+ (target 4-if-else.lox.out)
+ (deps ../../examples/4-if-else.lox)
+ (action
+  (with-outputs-to
+   %{target}
+   (run %{bin:saumon} %{deps}))))
+(rule
+ (alias runtest)
+ (deps
+  (:ref 4-if-else.lox.ref)
+  (:out 4-if-else.lox.out))
  (action
   (diff %{ref} %{out})))
