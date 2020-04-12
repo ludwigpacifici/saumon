@@ -1,48 +1,4 @@
-(*
- * program ::= declaration * EOF ;
- *
- * declaration ::= variable_declaration
- *               | statement ;
- *
- * variable_declaration ::= "var" IDENTIFIER ( "=" expression )? ";" ;
- *
- * statement ::= expression_statement
- *             | if_statement
- *             | print_statement
- *             | block ;
- *
- * if_statement ::= "if" "(" expression ")" statement ( "else" statement)? ;
- *
- * block ::= "{" declaration* "}" ;
- *
- * expression_statement ::= expression ";" ;
- *
- * print_statement ::= "print" expression ";" ;
- *
- * expression ::= assignment o
- *
- * assignment ::= IDENTIFIER "=" assignment ;
- *               | equality ;
- *
- * equality ::= comparison ( ( "!=" | "==" ) comparison )* ;
- *
- * comparison ::= addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
- *
- * addition ::= multiplication ( ( "-" | "+" ) multiplication )* ;
- *
- * multiplication ::= unary ( ( "/" | "*" ) unary )* ;
- *
- * unary ::= ( "!" | "-" ) unary
- *         | primary ;
- *
- * primary ::= NUMBER
- *           | STRING
- *           | "false"
- *           | "true"
- *           | "nil"
- *           | "(" expression ")"
- *           | IDENTIFIER ;
- *)
+(* Lox Grammar : http://www.craftinginterpreters.com/appendix-i.html *)
 
 type expression =
   | Literal of literal

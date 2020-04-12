@@ -42,3 +42,9 @@ print 123 == "123"; // false
 // Logical operators
 print !true;
 print !false;
+
+print true and false; // false
+print true and true;  // true
+
+print false or false; // false
+print true or false;  // true

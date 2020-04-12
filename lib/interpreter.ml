@@ -88,50 +88,68 @@ and evaluate_unary (env : Environment.t) (t : Token.t) (e : Ast.expression) :
   | Token_kind.Minus, Ok _ ->
       Error
         {location = t.location; message = "Expected a float after a unary minus"}
-  (* Lox follows Ruby’s simple rule: false and nil are falsey and everything
-     else is truthy. *)
-  | Token_kind.Bang, Ok (env, Value.Bool false) -> Ok (env, Value.Bool true)
-  | Token_kind.Bang, Ok (env, Value.Nil) -> Ok (env, Value.Bool true)
-  | Token_kind.Bang, _ -> Ok (env, Value.Bool false)
+  | Token_kind.Bang, Ok (env, v) ->
+      let b = not (Value.is_truthy v) in
+      Ok (env, Value.Bool b)
   | t_kind, _ ->
       Error
         { location = t.location
         ; message =
             "Unknown unary (" ^ Token_kind.to_string t_kind ^ ") operator" }
 
+(* Return the left hand side if truthy, otherwise, return the right hand side *)
+and evaluate_or (env : Environment.t) (l : Ast.expression) (r : Ast.expression)
+    : (Environment.t * Value.t, error) Result.t =
+  evaluate env l
+  |> Result.bind ~f:(fun (env, l) ->
+         if Value.is_truthy l then Ok (env, l) else evaluate env r)
+
+(* Return the left hand side if falsey, otherwise, return the right hand side *)
+and evaluate_and (env : Environment.t) (l : Ast.expression) (r : Ast.expression)
+    : (Environment.t * Value.t, error) Result.t =
+  evaluate env l
+  |> Result.bind ~f:(fun (env, l) ->
+         if not (Value.is_truthy l) then Ok (env, l) else evaluate env r)
+
 and evaluate_binary
     (env : Environment.t)
     (l : Ast.expression)
     (t : Token.t)
     (r : Ast.expression) : (Environment.t * Value.t, error) Result.t =
-  match (evaluate env l, t.kind, evaluate env r) with
-  | Ok (_, l), Token_kind.Equal_equal, Ok (_, r) ->
-      Ok (env, Value.Bool (Value.equal l r))
-  | Ok (_, l), Token_kind.Bang_equal, Ok (_, r) ->
-      Ok (env, Value.Bool (Value.equal l r |> not))
-  | Ok (_, Value.Number l), _, Ok (_, Value.Number r) ->
-      evaluate_binary_number l t r |> Result.map ~f:(fun v -> (env, v))
-  | Ok (_, Value.String l), _, Ok (_, Value.String r) ->
-      evaluate_binary_string l t r |> Result.map ~f:(fun v -> (env, v))
-  | Ok _, t_kind, Ok _ ->
-      Error
-        { location = t.location
-        ; message =
-            "Unknown binary operator ("
-            ^ Token_kind.to_string t_kind
-            ^ ") when left and right expressions have different types" }
-  | Error _, _, Ok _ ->
-      Error
-        { location = t.location
-        ; message = "Not able to evaluate the left expression" }
-  | Ok _, _, Error _ ->
-      Error
-        { location = t.location
-        ; message = "Not able to evaluate the right expression" }
-  | Error _, _, Error _ ->
-      Error
-        { location = t.location
-        ; message = "Not able to evaluate both left and right expression" }
+  let greedy_evaluate (l : Ast.expression) (t : Token.t) (r : Ast.expression) =
+    match (evaluate env l, t.kind, evaluate env r) with
+    | Ok (_, l), Token_kind.Equal_equal, Ok (_, r) ->
+        Ok (env, Value.Bool (Value.equal l r))
+    | Ok (_, l), Token_kind.Bang_equal, Ok (_, r) ->
+        Ok (env, Value.Bool (Value.equal l r |> not))
+    | Ok (_, Value.Number l), _, Ok (_, Value.Number r) ->
+        evaluate_binary_number l t r |> Result.map ~f:(fun v -> (env, v))
+    | Ok (_, Value.String l), _, Ok (_, Value.String r) ->
+        evaluate_binary_string l t r |> Result.map ~f:(fun v -> (env, v))
+    | Ok _, t_kind, Ok _ ->
+        Error
+          { location = t.location
+          ; message =
+              "Unknown binary operator ("
+              ^ Token_kind.to_string t_kind
+              ^ ") when left and right expressions have different types" }
+    | Error _, _, Ok _ ->
+        Error
+          { location = t.location
+          ; message = "Not able to evaluate the left expression" }
+    | Ok _, _, Error _ ->
+        Error
+          { location = t.location
+          ; message = "Not able to evaluate the right expression" }
+    | Error _, _, Error _ ->
+        Error
+          { location = t.location
+          ; message = "Not able to evaluate both left and right expression" }
+  in
+  match t.kind with
+  | Token_kind.Or -> evaluate_or env l r
+  | Token_kind.And -> evaluate_and env l r
+  | _ -> greedy_evaluate l t r
 
 let rec execute_statement (env : Environment.t) (s : Ast.statement) :
     (Environment.t * Value.t list option, error) Result.t =
@@ -148,8 +166,7 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
       (_if, _left_paren, condition, _right_paren, if_body, else_branch) ->
       evaluate env condition
       |> Result.bind ~f:(fun (env, condition) ->
-             if Value.equal condition (Value.Bool true) then
-               execute_statement env if_body
+             if Value.is_truthy condition then execute_statement env if_body
              else
                match else_branch with
                | None -> Ok (env, None)

@@ -220,6 +220,57 @@ let assign_with_invalid_lhs () =
   let equal = Token.of_token_kind ~kind:Token_kind.Equal in
   assert_parse_is_error [identifier_x; plus; identifier_y; equal; identifier_z]
 
+let logic_or_of_two_numbers (n : float) () =
+  let infix = Token.of_token_kind ~kind:Token_kind.Or in
+  let expression =
+    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  in
+  assert_parse
+    [ Token.of_token_kind ~kind:(Token_kind.Number n)
+    ; infix
+    ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
+    expression
+
+let logic_and_of_two_numbers (n : float) () =
+  let infix = Token.of_token_kind ~kind:Token_kind.And in
+  let expression =
+    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+  in
+  assert_parse
+    [ Token.of_token_kind ~kind:(Token_kind.Number n)
+    ; infix
+    ; Token.of_token_kind ~kind:(Token_kind.Number n) ]
+    expression
+
+let logic_and_precedence_over_or_left () =
+  let or_token = Token.of_token_kind ~kind:Token_kind.Or in
+  let and_token = Token.of_token_kind ~kind:Token_kind.And in
+  let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
+  let expression =
+    Ast.Binary
+      ( Ast.Binary
+          (Ast.Literal (Ast.Number 1.), and_token, Ast.Literal (Ast.Number 2.))
+      , or_token
+      , Ast.Literal (Ast.Number 3.) )
+  in
+  (* Logical and precedence is on the left of the or *)
+  assert_parse [number 1.; and_token; number 2.; or_token; number 3.] expression
+
+let logic_and_precedence_over_or_right () =
+  let or_token = Token.of_token_kind ~kind:Token_kind.Or in
+  let and_token = Token.of_token_kind ~kind:Token_kind.And in
+  let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
+  let expression =
+    Ast.Binary
+      ( Ast.Literal (Ast.Number 1.)
+      , or_token
+      , Ast.Binary
+          (Ast.Literal (Ast.Number 2.), and_token, Ast.Literal (Ast.Number 3.))
+      )
+  in
+  (* Logical and precedence is on the right of the or *)
+  assert_parse [number 1.; or_token; number 2.; and_token; number 3.] expression
+
 let all =
   [ Alcotest.test_case "Expression is number" `Quick (expression_is_number 42.)
   ; Alcotest.test_case "Expression is string" `Quick
@@ -258,4 +309,11 @@ let all =
   ; Alcotest.test_case "Nested assignments" `Quick (nested_assignments 42.)
   ; Alcotest.test_case "Assign with error" `Quick assign_with_error
   ; Alcotest.test_case "Assign with invalid lhs" `Quick assign_with_invalid_lhs
-  ]
+  ; Alcotest.test_case "Logic or of two numbers" `Quick
+      (logic_or_of_two_numbers 42.)
+  ; Alcotest.test_case "Logic and of two numbers" `Quick
+      (logic_and_of_two_numbers 42.)
+  ; Alcotest.test_case "Logic and precedence over or left" `Quick
+      logic_and_precedence_over_or_left
+  ; Alcotest.test_case "Logic and precedence over or right" `Quick
+      logic_and_precedence_over_or_right ]

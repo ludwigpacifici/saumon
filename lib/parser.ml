@@ -15,27 +15,36 @@ let consume_one_or_many k (infixes : Token_kind.t list) (ts : Token.t list) =
   in
   k ts |> Result.bind ~f:(fun (l, ts) -> aux l ts)
 
-(* A valid Ast part and the rest of the token list to be parsed *)
-type 'ast ok = 'ast * Token.t list
-
-let rec expression (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+let rec expression (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   assignment ts
 
-and assignment (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and assignment (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   match ts with
   | {kind = Token_kind.Identifier identifier; _}
     :: ({kind = Token_kind.Equal; _} as equal) :: ts ->
       expression ts
       |> Result.map ~f:(fun (expr, ts) ->
              (Ast.Assignment (Ast.Identifier identifier, equal, expr), ts))
-  | ts -> equality ts
+  | ts -> logic_or ts
 
-and equality (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and logic_or (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
+  consume_one_or_many logic_and [Token_kind.Or] ts
+
+and logic_and (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
+  consume_one_or_many equality [Token_kind.And] ts
+
+and equality (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   consume_one_or_many comparison
     [Token_kind.Equal_equal; Token_kind.Bang_equal]
     ts
 
-and comparison (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and comparison (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   consume_one_or_many addition
     [ Token_kind.Less
     ; Token_kind.Less_equal
@@ -43,20 +52,24 @@ and comparison (ts : Token.t list) : (Ast.expression ok, string) Result.t =
     ; Token_kind.Greater_equal ]
     ts
 
-and addition (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and addition (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   consume_one_or_many multiplication [Token_kind.Plus; Token_kind.Minus] ts
 
-and multiplication (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and multiplication (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   consume_one_or_many unary [Token_kind.Star; Token_kind.Slash] ts
 
-and unary (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and unary (ts : Token.t list) : (Ast.expression * Token.t list, string) Result.t
+    =
   match ts with
   | ({kind = Token_kind.Bang; _} as prefix) :: ts
    |({kind = Token_kind.Minus; _} as prefix) :: ts ->
       Result.map (unary ts) ~f:(fun (e, ts) -> (Ast.Unary (prefix, e), ts))
   | ts -> primary ts
 
-and primary (ts : Token.t list) : (Ast.expression ok, string) Result.t =
+and primary (ts : Token.t list) :
+    (Ast.expression * Token.t list, string) Result.t =
   match ts with
   | {kind = Token_kind.Number x; _} :: ts -> Ok (Ast.Literal (Ast.Number x), ts)
   | {kind = Token_kind.String x; _} :: ts -> Ok (Ast.Literal (Ast.String x), ts)
@@ -76,7 +89,7 @@ and primary (ts : Token.t list) : (Ast.expression ok, string) Result.t =
 
 (* Parse rules following pattern: rule -> expression * ";" *)
 let expression_statement (ts : Token.t list) :
-    (Ast.expression_statement ok, string) Result.t =
+    (Ast.expression_statement * Token.t list, string) Result.t =
   let expect_semicolon = function
     | ({kind = Token_kind.Semicolon; _} as semicolon) :: ts -> Ok (semicolon, ts)
     | _ -> Error "Expected an expression before ';'"
@@ -87,7 +100,7 @@ let expression_statement (ts : Token.t list) :
          |> Result.map ~f:(fun (semicolon, ts) -> ((e, semicolon), ts)))
 
 let rec block (open_brace : Token.t) (ts : Token.t list) :
-    (Ast.block ok, string) Result.t =
+    (Ast.block * Token.t list, string) Result.t =
   let rec aux acc = function
     | ({kind = Token_kind.Right_brace; _} as close_brace) :: ts ->
         Ok ((open_brace, List.rev acc, close_brace), ts)
@@ -96,7 +109,8 @@ let rec block (open_brace : Token.t) (ts : Token.t list) :
   in
   aux [] ts
 
-and statement (ts : Token.t list) : (Ast.statement ok, string) Result.t =
+and statement (ts : Token.t list) :
+    (Ast.statement * Token.t list, string) Result.t =
   match ts with
   | ({kind = Token_kind.Print; _} as print) :: ts ->
       expression_statement ts
@@ -115,7 +129,7 @@ and statement (ts : Token.t list) : (Ast.statement ok, string) Result.t =
              (Ast.Expression_statement statement, ts))
 
 and if_statement (if_token : Token.t) (left_paren : Token.t) (ts : Token.t list)
-    : (Ast.if_statement ok, string) Result.t =
+    : (Ast.if_statement * Token.t list, string) Result.t =
   expression ts
   |> Result.bind ~f:(fun (condition, ts) ->
          match ts with
@@ -147,7 +161,8 @@ and if_statement (if_token : Token.t) (left_paren : Token.t) (ts : Token.t list)
                         Ok (parsed_if, ts))
          | _ -> Error "Expected ')' after if condition.")
 
-and declaration (ts : Token.t list) : (Ast.declaration ok, string) Result.t =
+and declaration (ts : Token.t list) :
+    (Ast.declaration * Token.t list, string) Result.t =
   match ts with
   | ({kind = Token_kind.Var; _} as var) :: ts ->
       primary ts

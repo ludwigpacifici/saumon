@@ -217,8 +217,56 @@ let evaluate_binary () =
            , bad_expression ))
     |> Result.is_error )
 
+let evaluate_conditional () =
+  let true_ast = Ast.Literal (Ast.Bool true) in
+  let false_ast = Ast.Literal (Ast.Bool false) in
+  let and_token = Token.of_token_kind ~kind:Token_kind.And in
+  let or_token = Token.of_token_kind ~kind:Token_kind.Or in
+  check_value
+    (evaluate (Ast.Binary (true_ast, and_token, true_ast)))
+    (Ok (Value.Bool true)) ;
+  check_value
+    (evaluate (Ast.Binary (false_ast, and_token, true_ast)))
+    (Ok (Value.Bool false)) ;
+  check_value
+    (evaluate (Ast.Binary (true_ast, and_token, false_ast)))
+    (Ok (Value.Bool false)) ;
+  check_value
+    (evaluate (Ast.Binary (false_ast, and_token, false_ast)))
+    (Ok (Value.Bool false)) ;
+  check_value
+    (evaluate (Ast.Binary (true_ast, or_token, true_ast)))
+    (Ok (Value.Bool true)) ;
+  check_value
+    (evaluate (Ast.Binary (false_ast, or_token, true_ast)))
+    (Ok (Value.Bool true)) ;
+  check_value
+    (evaluate (Ast.Binary (true_ast, or_token, false_ast)))
+    (Ok (Value.Bool true)) ;
+  check_value
+    (evaluate (Ast.Binary (false_ast, or_token, false_ast)))
+    (Ok (Value.Bool false)) ;
+  (* Truethiness checked works also with not boolean values *)
+  let nil = Ast.Literal Ast.Nil in
+  let number_raw = 42. in
+  let number_value = Value.Number 42. in
+  let number = Ast.Literal (Ast.Number number_raw) in
+  check_value
+    (evaluate (Ast.Binary (number, and_token, number)))
+    (Ok number_value) ;
+  check_value (evaluate (Ast.Binary (nil, and_token, number))) (Ok Value.Nil) ;
+  check_value (evaluate (Ast.Binary (number, and_token, nil))) (Ok Value.Nil) ;
+  check_value (evaluate (Ast.Binary (nil, and_token, nil))) (Ok Value.Nil) ;
+  check_value
+    (evaluate (Ast.Binary (number, or_token, number)))
+    (Ok number_value) ;
+  check_value (evaluate (Ast.Binary (nil, or_token, number))) (Ok number_value) ;
+  check_value (evaluate (Ast.Binary (number, or_token, nil))) (Ok number_value) ;
+  check_value (evaluate (Ast.Binary (nil, or_token, nil))) (Ok Value.Nil)
+
 let all =
   [ Alcotest.test_case "Evaluate literal" `Quick evaluate_literal
   ; Alcotest.test_case "Evaluate grouping" `Quick evaluate_grouping
   ; Alcotest.test_case "Evaluate unary" `Quick evaluate_unary
-  ; Alcotest.test_case "Evaluate binary" `Quick evaluate_binary ]
+  ; Alcotest.test_case "Evaluate binary" `Quick evaluate_binary
+  ; Alcotest.test_case "Evaluate conditional" `Quick evaluate_conditional ]

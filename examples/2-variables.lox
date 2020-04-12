@@ -10,3 +10,6 @@ print breakfast; // "beignets"
 
 var iAmNil;
 print iAmNil; // prints "nil"
+
+// Precedence and grouping
+print (3 + 5) / 2; // prints 4
