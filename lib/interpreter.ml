@@ -1,4 +1,9 @@
+open Base
 open Omnipresent
+
+let ( let* ) x f = Result.bind ~f x
+
+let ( let+ ) x f = Result.map ~f x
 
 type error =
   { location : Location.t
@@ -48,17 +53,16 @@ let rec evaluate (env : Environment.t) (e : Ast.expression) :
   | Ast.Binary (l, t, r) -> evaluate_binary env l t r
   | Ast.Assignment (Ast.Identifier id, equal, expression) ->
       if Environment.contains ~env ~id then
-        evaluate env expression
-        |> Result.bind ~f:(fun (env, value) ->
-               match Environment.assign ~env ~id value with
-               | Some env -> Ok (env, value)
-               | None ->
-                   Error
-                     { location = equal.location
-                     ; message =
-                         "Unable to do assignement for "
-                         ^ id
-                         ^ " even though it is already defined." })
+        let* env, value = evaluate env expression in
+        match Environment.assign ~env ~id value with
+        | Some env -> Ok (env, value)
+        | None ->
+            Error
+              { location = equal.location
+              ; message =
+                  "Unable to do assignement for "
+                  ^ id
+                  ^ " even though it is already defined." }
       else
         Error
           { location = equal.location
@@ -100,16 +104,14 @@ and evaluate_unary (env : Environment.t) (t : Token.t) (e : Ast.expression) :
 (* Return the left hand side if truthy, otherwise, return the right hand side *)
 and evaluate_or (env : Environment.t) (l : Ast.expression) (r : Ast.expression)
     : (Environment.t * Value.t, error) Result.t =
-  evaluate env l
-  |> Result.bind ~f:(fun (env, l) ->
-         if Value.is_truthy l then Ok (env, l) else evaluate env r)
+  let* env, l = evaluate env l in
+  if Value.is_truthy l then Ok (env, l) else evaluate env r
 
 (* Return the left hand side if falsey, otherwise, return the right hand side *)
 and evaluate_and (env : Environment.t) (l : Ast.expression) (r : Ast.expression)
     : (Environment.t * Value.t, error) Result.t =
-  evaluate env l
-  |> Result.bind ~f:(fun (env, l) ->
-         if not (Value.is_truthy l) then Ok (env, l) else evaluate env r)
+  let* env, l = evaluate env l in
+  if not (Value.is_truthy l) then Ok (env, l) else evaluate env r
 
 and evaluate_binary
     (env : Environment.t)
@@ -123,9 +125,11 @@ and evaluate_binary
     | Ok (_, l), Token_kind.Bang_equal, Ok (_, r) ->
         Ok (env, Value.Bool (Value.equal l r |> not))
     | Ok (_, Value.Number l), _, Ok (_, Value.Number r) ->
-        evaluate_binary_number l t r |> Result.map ~f:(fun v -> (env, v))
+        let+ v = evaluate_binary_number l t r in
+        (env, v)
     | Ok (_, Value.String l), _, Ok (_, Value.String r) ->
-        evaluate_binary_string l t r |> Result.map ~f:(fun v -> (env, v))
+        let+ v = evaluate_binary_string l t r in
+        (env, v)
     | Ok _, t_kind, Ok _ ->
         Error
           { location = t.location
@@ -155,43 +159,40 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
     (Environment.t * Value.t list option, error) Result.t =
   match s with
   | Ast.Expression_statement (e, _) ->
-      evaluate env e
-      |> Result.bind ~f:(fun (env, _value) ->
-             (* Evaluate the expression in case of errors, but discard on
-                purpose the computed value because there is no print statement
-                for it. Forward the environment because it can be updated by an
-                assignment. *)
-             Ok (env, None))
+      let* env, _value = evaluate env e in
+      (* Evaluate the expression in case of errors, but discard on purpose the
+         computed value because there is no print statement for it. Forward the
+         environment because it can be updated by an assignment. *)
+      Ok (env, None)
   | Ast.If_statement
-      (_if, _left_paren, condition, _right_paren, if_body, else_branch) ->
-      evaluate env condition
-      |> Result.bind ~f:(fun (env, condition) ->
-             if Value.is_truthy condition then execute_statement env if_body
-             else
-               match else_branch with
-               | None -> Ok (env, None)
-               | Some (_else, else_body) -> execute_statement env else_body)
+      (_if, _left_paren, condition, _right_paren, if_body, else_branch) -> (
+      let* env, condition = evaluate env condition in
+      if Value.is_truthy condition then execute_statement env if_body
+      else
+        match else_branch with
+        | None -> Ok (env, None)
+        | Some (_else, else_body) -> execute_statement env else_body )
   | Ast.Print_statement (_, e, _) ->
-      evaluate env e |> Result.bind ~f:(fun (env, v) -> Ok (env, Some [v]))
+      let* env, v = evaluate env e in
+      Ok (env, Some [v])
   | Ast.Block (_, ds, end_block) -> execute_block env ds end_block
 
 (* Run everything in the block and ensure the environment is
    pushed/updated/popped correctly. *)
 and execute_block env ds end_block =
   let env = Environment.push_scope ~env in
-  List.fold_result ds ~init:(env, []) ~f:(fun (env, acc) d ->
-      execute_declaration env d
-      |> Result.map ~f:(fun (env, inner_vs) ->
-             let vs = Option.value inner_vs ~default:[] @ acc in
-             (env, vs)))
-  |> Result.bind ~f:(fun (env, vs) ->
-         match Environment.pop_scope ~env with
-         | Some (_dropped, env) -> Ok (env, Some vs)
-         | None ->
-             Error
-               { location = end_block.location
-               ; message = "Closing a block will remove the whole environment"
-               })
+  let* env, vs =
+    List.fold_result ds ~init:(env, []) ~f:(fun (env, acc) d ->
+        let+ env, inner_vs = execute_declaration env d in
+        let vs = Option.value inner_vs ~default:[] @ acc in
+        (env, vs))
+  in
+  match Environment.pop_scope ~env with
+  | Some (_dropped, env) -> Ok (env, Some vs)
+  | None ->
+      Error
+        { location = end_block.location
+        ; message = "Closing a block will remove the whole environment" }
 
 and execute_variable_declaration
     (env : Environment.t)
@@ -201,8 +202,8 @@ and execute_variable_declaration
       (* A variable not explicitly initialized is implicitely set to "nil" *)
       Environment.define ~env ~id Value.Nil |> Result.return
   | _, Ast.Identifier id, Some (_, e), _ ->
-      evaluate env e
-      |> Result.map ~f:(fun (env, value) -> Environment.define ~env ~id value)
+      let+ env, value = evaluate env e in
+      Environment.define ~env ~id value
   | t, _, _, _ ->
       Error
         { location = t.location
@@ -213,18 +214,17 @@ and execute_declaration (env : Environment.t) (d : Ast.declaration) :
   match d with
   | Ast.Statement s -> execute_statement env s
   | Ast.Variable_declaration v ->
-      execute_variable_declaration env v
-      |> Result.map ~f:(fun env -> (env, None))
+      let+ env = execute_variable_declaration env v in
+      (env, None)
 
 let extract_values
     ((env : Environment.t), (vs : Value.t list))
     (d : Ast.declaration) =
-  execute_declaration env d
-  |> Result.bind ~f:(fun (env, new_vs) ->
-         Option.map new_vs ~f:(fun new_vs -> new_vs @ vs)
-         |> Option.value ~default:vs
-         |> Result.return
-         |> Result.map ~f:(fun vs -> (env, vs)))
+  let* env, new_vs = execute_declaration env d in
+  Option.map new_vs ~f:(fun new_vs -> new_vs @ vs)
+  |> Option.value ~default:vs
+  |> Result.return
+  |> Result.map ~f:(fun vs -> (env, vs))
 
 let stdout_print (_ : Environment.t) (vs : Value.t list) : unit =
   List.iter vs ~f:(Value.to_string >> Core.Out_channel.print_endline)
@@ -233,8 +233,10 @@ let execute_k
     ~(k : Environment.t -> Value.t list -> unit)
     (env : Environment.t)
     (program : Ast.Program.t) : (unit, error) Result.t =
-  List.fold_result ~init:(env, []) ~f:extract_values (Ast.Program.get program)
-  |> Result.map ~f:(fun (env, vs) -> k env (List.rev vs))
+  let+ env, vs =
+    List.fold_result ~init:(env, []) ~f:extract_values (Ast.Program.get program)
+  in
+  k env (List.rev vs)
 
 let execute (env : Environment.t) (program : Ast.Program.t) :
     (unit, error) Result.t =
