@@ -1,3 +1,3 @@
-This directory diffs a Lox program output with an expected output. Source code can be found in [`examples`](../../examples/) or here. Add a new section to the [`dune`](./dune) file to add new a test.
+This directory contains examples of Lox code. More information about [the Lox language](http://www.craftinginterpreters.com/the-lox-language.html).
 
-Run these tests with `dune runtest <path/to/this/directory`.
+To add a new integration test, add a new `.lox` file and its expected output in a `.lox.expected` file. Finally, add a new rule in the [`dune`](./dune) file

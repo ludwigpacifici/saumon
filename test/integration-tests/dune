@@ -1,59 +1,43 @@
 (rule
- (target 1-hello-world.lox.out)
- (deps ../../examples/1-hello-world.lox)
- (action
-  (with-outputs-to
-   %{target}
-   (run %{bin:saumon} %{deps}))))
+ (targets hello-world.lox.out)
+ (deps hello-world.lox)
+ (action (with-outputs-to %{targets} (run %{bin:saumon} %{deps}))))
 (rule
  (alias runtest)
  (deps
-  (:ref 1-hello-world.lox.ref)
-  (:out 1-hello-world.lox.out))
- (action
-  (diff %{ref} %{out})))
+  (:ref hello-world.lox.expected)
+  (:out hello-world.lox.out))
+ (action (diff %{ref} %{out})))
 
 (rule
- (target 2-variables.lox.out)
- (deps ../../examples/2-variables.lox)
- (action
-  (with-outputs-to
-   %{target}
-   (run %{bin:saumon} %{deps}))))
+ (targets variables.lox.out)
+ (deps variables.lox)
+ (action (with-outputs-to %{targets} (run %{bin:saumon} %{deps}))))
 (rule
  (alias runtest)
  (deps
-  (:ref 2-variables.lox.ref)
-  (:out 2-variables.lox.out))
- (action
-  (diff %{ref} %{out})))
+  (:ref variables.lox.expected)
+  (:out variables.lox.out))
+ (action (diff %{ref} %{out})))
 
 (rule
- (target 3-scopes.lox.out)
- (deps ../../examples/3-scopes.lox)
- (action
-  (with-outputs-to
-   %{target}
-   (run %{bin:saumon} %{deps}))))
+ (targets scopes.lox.out)
+ (deps scopes.lox)
+ (action (with-outputs-to %{targets} (run %{bin:saumon} %{deps}))))
 (rule
  (alias runtest)
  (deps
-  (:ref 3-scopes.lox.ref)
-  (:out 3-scopes.lox.out))
- (action
-  (diff %{ref} %{out})))
+  (:ref scopes.lox.expected)
+  (:out scopes.lox.out))
+ (action (diff %{ref} %{out})))
 
 (rule
- (target 4-if-else.lox.out)
- (deps ../../examples/4-if-else.lox)
- (action
-  (with-outputs-to
-   %{target}
-   (run %{bin:saumon} %{deps}))))
+ (targets if-else.lox.out)
+ (deps if-else.lox)
+ (action (with-outputs-to %{targets} (run %{bin:saumon} %{deps}))))
 (rule
  (alias runtest)
  (deps
-  (:ref 4-if-else.lox.ref)
-  (:out 4-if-else.lox.out))
- (action
-  (diff %{ref} %{out})))
+  (:ref if-else.lox.expected)
+  (:out if-else.lox.out))
+ (action (diff %{ref} %{out})))
