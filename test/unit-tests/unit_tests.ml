@@ -6,8 +6,10 @@ let () =
     ; ("Parser declaration tests", Parser_declaration_tests.all)
     ; ("Parser block tests", Parser_block_tests.all)
     ; ("Parser conditional tests", Parser_conditional_tests.all)
+    ; ("Parser while tests", Parser_while_tests.all)
     ; ("Interpreter expression tests", Interpreter_expression_tests.all)
     ; ("Interpreter statement tests", Interpreter_statement_tests.all)
     ; ("Interpreter block tests", Interpreter_block_tests.all)
     ; ("Interpreter conditional tests", Interpreter_conditional_tests.all)
+    ; ("Interpreter while tests", Interpreter_while_tests.all)
     ; ("Environment tests", Environment_tests.all) ]

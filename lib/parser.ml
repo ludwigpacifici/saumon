@@ -117,16 +117,20 @@ let rec block (open_brace : Token.t) (ts : Token.t list) :
 and statement (ts : Token.t list) :
     (Ast.statement * Token.t list, string) Result.t =
   match ts with
-  | ({kind = Token_kind.Print; _} as print) :: ts ->
-      let+ (e, semicolon), ts = expression_statement ts in
-      (Ast.Print_statement (print, e, semicolon), ts)
-  | ({kind = Token_kind.Left_brace; _} as new_block) :: ts ->
-      let+ block, ts = block new_block ts in
-      (Ast.Block block, ts)
   | ({kind = Token_kind.If; _} as if_token)
     :: ({kind = Token_kind.Left_paren; _} as left_paren) :: ts ->
       let+ parsed_if, ts = if_statement if_token left_paren ts in
       (Ast.If_statement parsed_if, ts)
+  | ({kind = Token_kind.Left_brace; _} as new_block) :: ts ->
+      let+ block, ts = block new_block ts in
+      (Ast.Block block, ts)
+  | ({kind = Token_kind.Print; _} as print) :: ts ->
+      let+ (e, semicolon), ts = expression_statement ts in
+      (Ast.Print_statement (print, e, semicolon), ts)
+  | ({kind = Token_kind.While; _} as while_token)
+    :: ({kind = Token_kind.Left_paren; _} as left_paren) :: ts ->
+      let+ parsed_while, ts = while_statement while_token left_paren ts in
+      (Ast.While_statement parsed_while, ts)
   | ts ->
       let+ statement, ts = expression_statement ts in
       (Ast.Expression_statement statement, ts)
@@ -154,6 +158,21 @@ and if_statement (if_token : Token.t) (left_paren : Token.t) (ts : Token.t list)
             (if_token, left_paren, condition, right_paren, if_body, None)
           in
           Ok (parsed_if, ts) )
+  | _ -> Error "Expected ')' after if condition."
+
+and while_statement
+    (while_token : Token.t)
+    (left_paren : Token.t)
+    (ts : Token.t list) : (Ast.while_statement * Token.t list, string) Result.t
+    =
+  let* condition, ts = expression ts in
+  match ts with
+  | ({kind = Token_kind.Right_paren; _} as right_paren) :: ts ->
+      let* while_body, ts = statement ts in
+      let parsed_while =
+        (while_token, left_paren, condition, right_paren, while_body)
+      in
+      Ok (parsed_while, ts)
   | _ -> Error "Expected ')' after if condition."
 
 and declaration (ts : Token.t list) :

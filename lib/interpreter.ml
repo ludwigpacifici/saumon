@@ -157,7 +157,20 @@ and evaluate_binary
 
 let rec execute_statement (env : Environment.t) (s : Ast.statement) :
     (Environment.t * Value.t list option, error) Result.t =
+  let rec while_loop condition body (env, values) =
+    let* env, condition_value = evaluate env condition in
+    if Value.is_truthy condition_value then
+      let* env, new_values = execute_statement env body in
+      match (values, new_values) with
+      | None, None -> while_loop condition body (env, None)
+      | Some values, None -> while_loop condition body (env, Some values)
+      | None, Some new_values -> while_loop condition body (env, Some new_values)
+      | Some values, Some new_values ->
+          while_loop condition body (env, Some (new_values @ values))
+    else Ok (env, values)
+  in
   match s with
+  | Ast.Block (_, ds, end_block) -> execute_block env ds end_block
   | Ast.Expression_statement (e, _) ->
       let* env, _value = evaluate env e in
       (* Evaluate the expression in case of errors, but discard on purpose the
@@ -175,7 +188,8 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
   | Ast.Print_statement (_, e, _) ->
       let* env, v = evaluate env e in
       Ok (env, Some [v])
-  | Ast.Block (_, ds, end_block) -> execute_block env ds end_block
+  | Ast.While_statement (_while, _left_paren, condition, _right_paren, body) ->
+      while_loop condition body (env, None)
 
 (* Run everything in the block and ensure the environment is
    pushed/updated/popped correctly. *)

@@ -1,0 +1,9 @@
+var i = 0;
+while (i < 2) {
+      print i;
+      i = i + 1;
+}
+
+print "Before while";
+while (false) { print "This will not be printed"; }
+print "End while";

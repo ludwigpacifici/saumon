@@ -1,18 +1,18 @@
 (* Lox Grammar : http://www.craftinginterpreters.com/appendix-i.html *)
 
 type expression =
-  | Literal of literal
-  | Unary of unary
+  | Assignment of assignment
   | Binary of binary
   | Grouping of grouping
-  | Assignment of assignment
+  | Literal of literal
+  | Unary of unary
 
 and literal =
+  | Bool of bool
+  | Identifier of string
+  | Nil
   | Number of float
   | String of string
-  | Bool of bool
-  | Nil
-  | Identifier of string
 
 and unary = Token.t * expression
 
@@ -52,14 +52,21 @@ type variable_declaration =
 [@@deriving show, eq]
 
 type declaration =
-  | Variable_declaration of variable_declaration
   | Statement of statement
+  | Variable_declaration of variable_declaration
 
 and statement =
+  | Block of block
   | Expression_statement of expression_statement
   | If_statement of if_statement
   | Print_statement of print_statement
-  | Block of block
+  | While_statement of while_statement
+
+and block =
+  Token.t (* Constantly equal to token_kind.Left_brace. *)
+  * declaration list
+  * (* Constantly equal to token_kind.Right_brace. *)
+    Token.t
 
 and if_statement =
   Token.t (* Constantly equal to token_kind.If. *)
@@ -69,11 +76,12 @@ and if_statement =
   * statement
   * (Token.t (* Constantly equal to token_kind.Else. *) * statement) option
 
-and block =
-  Token.t (* Constantly equal to token_kind.Left_brace. *)
-  * declaration list
-  * (* Constantly equal to token_kind.Right_brace. *)
-    Token.t
+and while_statement =
+  Token.t (* Constantly equal to token_kind.While. *)
+  * Token.t (* Constantly equal to token_kind.Left_paren. *)
+  * expression
+  * Token.t (* Constantly equal to token_kind.Right_paren. *)
+  * statement
 [@@deriving show, eq]
 
 module Program = struct
