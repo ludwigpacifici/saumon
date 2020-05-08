@@ -1,0 +1,17 @@
+var f0 = 0;
+print f0;
+
+var f1 = 1;
+print f1;
+
+var i = 0;
+
+while (i < 19) {
+      var f = f1 + f0;
+      f0 = f1;
+      f1 = f;
+
+      i = i + 1;
+
+      print f;
+}

@@ -77,3 +77,19 @@
   (:out while-loop.lox.out))
  (action
   (diff %{ref} %{out})))
+
+(rule
+ (targets fibonacci.lox.out)
+ (deps fibonacci.lox)
+ (action
+  (with-outputs-to
+   %{targets}
+   (run %{bin:saumon} %{deps}))))
+
+(rule
+ (alias runtest)
+ (deps
+  (:ref fibonacci.lox.expected)
+  (:out fibonacci.lox.out))
+ (action
+  (diff %{ref} %{out})))
