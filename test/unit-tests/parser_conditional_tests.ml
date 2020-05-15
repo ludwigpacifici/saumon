@@ -33,7 +33,7 @@ let valid_if () =
         , left_paren
         , Ast.Literal (Ast.Bool true)
         , right_paren
-        , Ast.Expression_statement (Ast.Literal Ast.Nil, semicolon)
+        , Ast.Expression_statement (Ast.Literal Ast.Nil)
         , None )
     |> Ast.Program.of_statement
     |> Result.return )
@@ -56,10 +56,8 @@ let valid_if_else () =
         , left_paren
         , Ast.Literal (Ast.Bool true)
         , right_paren
-        , Ast.Expression_statement (Ast.Literal Ast.Nil, semicolon)
-        , Some
-            ( else_token
-            , Ast.Expression_statement (Ast.Literal Ast.Nil, semicolon) ) )
+        , Ast.Expression_statement (Ast.Literal Ast.Nil)
+        , Some (else_token, Ast.Expression_statement (Ast.Literal Ast.Nil)) )
     |> Ast.Program.of_statement
     |> Result.return )
 

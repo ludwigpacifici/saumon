@@ -20,25 +20,17 @@ and binary = expression * Token.t * expression
 
 and grouping = Token.t * expression * Token.t
 
+(* TODO: remove all the Token.t that should be set to a constant value. They do
+   not have added value, plus it makes rewritting the AST harder. *)
 and assignment =
   literal (* Constantly equal to token_kind.Identifier *)
   * Token.t (* Constantly equal to Identifier *)
   * expression
 [@@deriving show, eq]
 
-type expression_statement =
-  expression
-  * (* The prefix token is constantly equal to token_kind.Semicolon, i.e. ";" *)
-    Token.t
-[@@deriving show, eq]
+type expression_statement = expression [@@deriving show, eq]
 
-type print_statement =
-  Token.t
-  (* The suffix token is constantly equal to token_kind.Print, i.e. "print" *)
-  * expression
-  * (* The prefix token is constantly equal to token_kind.Semicolon, i.e. ";" *)
-    Token.t
-[@@deriving show, eq]
+type print_statement = expression [@@deriving show, eq]
 
 type variable_declaration =
   Token.t (* Constantly equal to token_kind.Var, i.e. "var" *)
@@ -62,26 +54,21 @@ and statement =
   | Print_statement of print_statement
   | While_statement of while_statement
 
-and block =
-  Token.t (* Constantly equal to token_kind.Left_brace. *)
-  * declaration list
-  * (* Constantly equal to token_kind.Right_brace. *)
-    Token.t
+and block = declaration list
 
 and if_statement =
-  Token.t (* Constantly equal to token_kind.If. *)
-  * Token.t (* Constantly equal to token_kind.Left_paren. *)
+  Token.t (* Constantly equal to token_kind.If *)
+  * Token.t (* Constantly equal to token_kind.Left_paren *)
   * expression
-  * Token.t (* Constantly equal to token_kind.Right_paren. *)
+  * Token.t (* Constantly equal to token_kind.Right_paren *)
   * statement
-  * (Token.t (* Constantly equal to token_kind.Else. *) * statement) option
+  * (Token.t (* Constantly equal to token_kind.Else *) * statement) option
 
 and while_statement =
-  Token.t (* Constantly equal to token_kind.While. *)
-  * Token.t (* Constantly equal to token_kind.Left_paren. *)
-  * expression
-  * Token.t (* Constantly equal to token_kind.Right_paren. *)
+  expression
+  (* If evaluated to true then run the while body otherwise stop the while loop *)
   * statement
+(* Body of the while loop *)
 [@@deriving show, eq]
 
 module Program = struct

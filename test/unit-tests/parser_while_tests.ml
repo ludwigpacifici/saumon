@@ -25,11 +25,8 @@ let valid_while () =
        (* while ( true ) nil ; *)
        [while_token; left_paren; true_token; right_paren; nil; semicolon])
     ( Ast.While_statement
-        ( while_token
-        , left_paren
-        , Ast.Literal (Ast.Bool true)
-        , right_paren
-        , Ast.Expression_statement (Ast.Literal Ast.Nil, semicolon) )
+        ( Ast.Literal (Ast.Bool true)
+        , Ast.Expression_statement (Ast.Literal Ast.Nil) )
     |> Ast.Program.of_statement
     |> Result.return )
 

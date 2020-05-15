@@ -7,11 +7,6 @@ let check_parse =
 
 let check_true = Alcotest.(check bool) "check Parser.parse" true
 
-(* Helper to add a semicolon at the end of an expression *)
-let statement_of_expression e =
-  let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon in
-  Ast.Expression_statement (e, semicolon)
-
 (* Helper to parse a list of token representing an expression and add a
    semicolon at the end *)
 let parse_with_semicolon ts =
@@ -22,7 +17,7 @@ let parse_with_semicolon ts =
 let assert_parse ts expected_expression =
   check_parse (parse_with_semicolon ts)
     ( expected_expression
-    |> statement_of_expression
+    |> (fun e -> Ast.Expression_statement e)
     |> Ast.Program.of_statement
     |> Result.return )
 

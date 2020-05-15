@@ -1,0 +1,17 @@
+for (var i = 0; i < 3; i = i + 1) print i;
+
+{
+    var j;
+    for (j = 1 ; j < 3 ; ) {
+       print j;
+       j = j + 1;
+    }
+}
+
+{
+    var k;
+    for (k = 0 ; k < 0 ; ) {
+        print k;
+        k = k + 1;
+    }
+}

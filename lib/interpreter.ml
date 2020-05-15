@@ -170,8 +170,8 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
     else Ok (env, values)
   in
   match s with
-  | Ast.Block (_, ds, end_block) -> execute_block env ds end_block
-  | Ast.Expression_statement (e, _) ->
+  | Ast.Block declarations -> execute_block env declarations
+  | Ast.Expression_statement e ->
       let* env, _value = evaluate env e in
       (* Evaluate the expression in case of errors, but discard on purpose the
          computed value because there is no print statement for it. Forward the
@@ -185,15 +185,15 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
         match else_branch with
         | None -> Ok (env, None)
         | Some (_else, else_body) -> execute_statement env else_body )
-  | Ast.Print_statement (_, e, _) ->
+  | Ast.Print_statement e ->
       let* env, v = evaluate env e in
       Ok (env, Some [v])
-  | Ast.While_statement (_while, _left_paren, condition, _right_paren, body) ->
+  | Ast.While_statement (condition, body) ->
       while_loop condition body (env, None)
 
 (* Run everything in the block and ensure the environment is
    pushed/updated/popped correctly. *)
-and execute_block env ds end_block =
+and execute_block env ds =
   let env = Environment.push_scope ~env in
   let* env, vs =
     List.fold_result ds ~init:(env, []) ~f:(fun (env, acc) d ->
@@ -205,7 +205,9 @@ and execute_block env ds end_block =
   | Some (_dropped, env) -> Ok (env, Some vs)
   | None ->
       Error
-        { location = end_block.location
+        { location =
+            (* FIXME: review error reporting with to provide line/column *)
+            Location.start ()
         ; message = "Closing a block will remove the whole environment" }
 
 and execute_variable_declaration
