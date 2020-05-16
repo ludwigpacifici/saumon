@@ -44,16 +44,17 @@ let evaluate_binary_string (l : string) (t : Token.t) (r : string) :
             ^ Token_kind.to_string t_kind
             ^ ") to be used with two strings" }
 
-let rec evaluate (env : Environment.t) (e : Ast.expression) :
+let rec evaluate (env : Environment.t) (expr : Ast.expression) :
     (Environment.t * Value.t, error) Result.t =
-  match e with
+  match expr with
   | Ast.Literal l -> evaluate_literal env l
-  | Ast.Grouping (_, e, _) -> evaluate env e
-  | Ast.Unary (t, e) -> evaluate_unary env t e
-  | Ast.Binary (l, t, r) -> evaluate_binary env l t r
-  | Ast.Assignment (Ast.Identifier id, equal, expression) ->
+  | Ast.Grouping {expr; _} -> evaluate env expr
+  | Ast.Unary {operator; expr} -> evaluate_unary env operator expr
+  | Ast.Binary {left_expr; operator; right_expr} ->
+      evaluate_binary env left_expr operator right_expr
+  | Ast.Assignment {identifier = Ast.Identifier id; equal; expr} ->
       if Environment.contains ~env ~id then
-        let* env, value = evaluate env expression in
+        let* env, value = evaluate env expr in
         match Environment.assign ~env ~id value with
         | Some env -> Ok (env, value)
         | None ->
@@ -67,7 +68,7 @@ let rec evaluate (env : Environment.t) (e : Ast.expression) :
         Error
           { location = equal.location
           ; message = "Undefined variable '" ^ id ^ "'" }
-  | Ast.Assignment (_, equal, _) ->
+  | Ast.Assignment {equal; _} ->
       Error
         { location = equal.location
         ; message = "Expected to have an identifer on the left of '='" }
@@ -170,25 +171,24 @@ let rec execute_statement (env : Environment.t) (s : Ast.statement) :
     else Ok (env, values)
   in
   match s with
-  | Ast.Block declarations -> execute_block env declarations
-  | Ast.Expression_statement e ->
-      let* env, _value = evaluate env e in
+  | Ast.Block {statements} -> execute_block env statements
+  | Ast.Expression_statement {expr} ->
+      let* env, _value = evaluate env expr in
       (* Evaluate the expression in case of errors, but discard on purpose the
          computed value because there is no print statement for it. Forward the
          environment because it can be updated by an assignment. *)
       Ok (env, None)
-  | Ast.If_statement
-      (_if, _left_paren, condition, _right_paren, if_body, else_branch) -> (
+  | Ast.If_statement {condition; if_body; else_body} -> (
       let* env, condition = evaluate env condition in
       if Value.is_truthy condition then execute_statement env if_body
       else
-        match else_branch with
+        match else_body with
         | None -> Ok (env, None)
-        | Some (_else, else_body) -> execute_statement env else_body )
-  | Ast.Print_statement e ->
-      let* env, v = evaluate env e in
+        | Some else_body -> execute_statement env else_body )
+  | Ast.Print_statement {expr} ->
+      let* env, v = evaluate env expr in
       Ok (env, Some [v])
-  | Ast.While_statement (condition, body) ->
+  | Ast.While_statement {condition; body} ->
       while_loop condition body (env, None)
 
 (* Run everything in the block and ensure the environment is
@@ -214,15 +214,15 @@ and execute_variable_declaration
     (env : Environment.t)
     (v : Ast.variable_declaration) : (Environment.t, error) Result.t =
   match v with
-  | _, Ast.Identifier id, None, _ ->
+  | {identifier = Ast.Identifier id; assign = None; _} ->
       (* A variable not explicitly initialized is implicitely set to "nil" *)
       Environment.define ~env ~id Value.Nil |> Result.return
-  | _, Ast.Identifier id, Some (_, e), _ ->
-      let+ env, value = evaluate env e in
+  | {identifier = Ast.Identifier id; assign = Some {expr; _}; _} ->
+      let+ env, value = evaluate env expr in
       Environment.define ~env ~id value
-  | t, _, _, _ ->
+  | {var; _} ->
       Error
-        { location = t.location
+        { location = var.location
         ; message = "Cannot execute a variable declaration." }
 
 and execute_declaration (env : Environment.t) (d : Ast.declaration) :

@@ -29,12 +29,9 @@ let valid_if () =
        (* if ( true ) nil ; *)
        [if_token; left_paren; true_token; right_paren; nil; semicolon])
     ( Ast.If_statement
-        ( if_token
-        , left_paren
-        , Ast.Literal (Ast.Bool true)
-        , right_paren
-        , Ast.Expression_statement (Ast.Literal Ast.Nil)
-        , None )
+        { condition = Ast.Literal (Ast.Bool true)
+        ; if_body = Ast.Expression_statement {expr = Ast.Literal Ast.Nil}
+        ; else_body = None }
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -52,12 +49,10 @@ let valid_if_else () =
        ; nil
        ; semicolon ])
     ( Ast.If_statement
-        ( if_token
-        , left_paren
-        , Ast.Literal (Ast.Bool true)
-        , right_paren
-        , Ast.Expression_statement (Ast.Literal Ast.Nil)
-        , Some (else_token, Ast.Expression_statement (Ast.Literal Ast.Nil)) )
+        { condition = Ast.Literal (Ast.Bool true)
+        ; if_body = Ast.Expression_statement {expr = Ast.Literal Ast.Nil}
+        ; else_body =
+            Some (Ast.Expression_statement {expr = Ast.Literal Ast.Nil}) }
     |> Ast.Program.of_statement
     |> Result.return )
 

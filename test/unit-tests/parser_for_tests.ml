@@ -65,30 +65,45 @@ let valid_for () =
        ; identifier
        ; semicolon ])
     ( Ast.Block
-        [ Ast.Variable_declaration
-            ( var
-            , Ast.Identifier raw_identifier
-            , Some (equal, Ast.Literal (Ast.Number 0.))
-            , semicolon )
-        ; Ast.Statement
-            (Ast.While_statement
-               ( Ast.Binary
-                   ( Ast.Literal (Ast.Identifier raw_identifier)
-                   , less
-                   , Ast.Literal (Ast.Number 3.) )
-               , Ast.Block
-                   [ Ast.Statement
-                       (Ast.Print_statement
-                          (Ast.Literal (Ast.Identifier raw_identifier)))
-                   ; Ast.Statement
-                       (Ast.Expression_statement
-                          (Ast.Assignment
-                             ( Ast.Identifier raw_identifier
-                             , equal
-                             , Ast.Binary
-                                 ( Ast.Literal (Ast.Identifier raw_identifier)
-                                 , plus
-                                 , Ast.Literal (Ast.Number 1.) ) ))) ] )) ]
+        { statements =
+            [ Ast.Variable_declaration
+                { var
+                ; identifier = Ast.Identifier raw_identifier
+                ; assign = Some {equal; expr = Ast.Literal (Ast.Number 0.)}
+                ; semicolon }
+            ; Ast.Statement
+                (Ast.While_statement
+                   { condition =
+                       Ast.Binary
+                         { left_expr =
+                             Ast.Literal (Ast.Identifier raw_identifier)
+                         ; operator = less
+                         ; right_expr = Ast.Literal (Ast.Number 3.) }
+                   ; body =
+                       Ast.Block
+                         { statements =
+                             [ Ast.Statement
+                                 (Ast.Print_statement
+                                    { expr =
+                                        Ast.Literal
+                                          (Ast.Identifier raw_identifier) })
+                             ; Ast.Statement
+                                 (Ast.Expression_statement
+                                    { expr =
+                                        Ast.Assignment
+                                          { identifier =
+                                              Ast.Identifier raw_identifier
+                                          ; equal
+                                          ; expr =
+                                              Ast.Binary
+                                                { left_expr =
+                                                    Ast.Literal
+                                                      (Ast.Identifier
+                                                         raw_identifier)
+                                                ; operator = plus
+                                                ; right_expr =
+                                                    Ast.Literal (Ast.Number 1.)
+                                                } } }) ] } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -114,27 +129,40 @@ let valid_for_without_exit_condition () =
        ; identifier
        ; semicolon ])
     ( Ast.Block
-        [ Ast.Variable_declaration
-            ( var
-            , Ast.Identifier raw_identifier
-            , Some (equal, Ast.Literal (Ast.Number 0.))
-            , semicolon )
-        ; Ast.Statement
-            (Ast.While_statement
-               ( Ast.Literal (Ast.Bool true)
-               , Ast.Block
-                   [ Ast.Statement
-                       (Ast.Print_statement
-                          (Ast.Literal (Ast.Identifier raw_identifier)))
-                   ; Ast.Statement
-                       (Ast.Expression_statement
-                          (Ast.Assignment
-                             ( Ast.Identifier raw_identifier
-                             , equal
-                             , Ast.Binary
-                                 ( Ast.Literal (Ast.Identifier raw_identifier)
-                                 , plus
-                                 , Ast.Literal (Ast.Number 1.) ) ))) ] )) ]
+        { statements =
+            [ Ast.Variable_declaration
+                { var
+                ; identifier = Ast.Identifier raw_identifier
+                ; assign = Some {equal; expr = Ast.Literal (Ast.Number 0.)}
+                ; semicolon }
+            ; Ast.Statement
+                (Ast.While_statement
+                   { condition = Ast.Literal (Ast.Bool true)
+                   ; body =
+                       Ast.Block
+                         { statements =
+                             [ Ast.Statement
+                                 (Ast.Print_statement
+                                    { expr =
+                                        Ast.Literal
+                                          (Ast.Identifier raw_identifier) })
+                             ; Ast.Statement
+                                 (Ast.Expression_statement
+                                    { expr =
+                                        Ast.Assignment
+                                          { identifier =
+                                              Ast.Identifier raw_identifier
+                                          ; equal
+                                          ; expr =
+                                              Ast.Binary
+                                                { left_expr =
+                                                    Ast.Literal
+                                                      (Ast.Identifier
+                                                         raw_identifier)
+                                                ; operator = plus
+                                                ; right_expr =
+                                                    Ast.Literal (Ast.Number 1.)
+                                                } } }) ] } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -158,21 +186,29 @@ let valid_for_without_increment () =
        ; identifier
        ; semicolon ])
     ( Ast.Block
-        [ Ast.Variable_declaration
-            ( var
-            , Ast.Identifier raw_identifier
-            , Some (equal, Ast.Literal (Ast.Number 0.))
-            , semicolon )
-        ; Ast.Statement
-            (Ast.While_statement
-               ( Ast.Binary
-                   ( Ast.Literal (Ast.Identifier raw_identifier)
-                   , less
-                   , Ast.Literal (Ast.Number 3.) )
-               , Ast.Block
-                   [ Ast.Statement
-                       (Ast.Print_statement
-                          (Ast.Literal (Ast.Identifier raw_identifier))) ] )) ]
+        { statements =
+            [ Ast.Variable_declaration
+                { var
+                ; identifier = Ast.Identifier raw_identifier
+                ; assign = Some {equal; expr = Ast.Literal (Ast.Number 0.)}
+                ; semicolon }
+            ; Ast.Statement
+                (Ast.While_statement
+                   { condition =
+                       Ast.Binary
+                         { left_expr =
+                             Ast.Literal (Ast.Identifier raw_identifier)
+                         ; operator = less
+                         ; right_expr = Ast.Literal (Ast.Number 3.) }
+                   ; body =
+                       Ast.Block
+                         { statements =
+                             [ Ast.Statement
+                                 (Ast.Print_statement
+                                    { expr =
+                                        Ast.Literal
+                                          (Ast.Identifier raw_identifier) }) ]
+                         } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -189,13 +225,18 @@ let valid_for_minimal () =
        ; nil
        ; semicolon ])
     ( Ast.Block
-        [ Ast.Statement (Ast.Expression_statement (Ast.Literal Ast.Nil))
-        ; Ast.Statement
-            (Ast.While_statement
-               ( Ast.Literal (Ast.Bool true)
-               , Ast.Block
-                   [ Ast.Statement
-                       (Ast.Expression_statement (Ast.Literal Ast.Nil)) ] )) ]
+        { statements =
+            [ Ast.Statement
+                (Ast.Expression_statement {expr = Ast.Literal Ast.Nil})
+            ; Ast.Statement
+                (Ast.While_statement
+                   { condition = Ast.Literal (Ast.Bool true)
+                   ; body =
+                       Ast.Block
+                         { statements =
+                             [ Ast.Statement
+                                 (Ast.Expression_statement
+                                    {expr = Ast.Literal Ast.Nil}) ] } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 

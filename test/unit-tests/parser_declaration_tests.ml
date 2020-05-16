@@ -19,7 +19,11 @@ let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon
 let valid_declaration_with_no_initialization () =
   check_parse
     (Parser.parse [var; identifier; semicolon])
-    ( (var, Ast.Identifier raw_identifier, None, semicolon)
+    ( Ast.Variable_declaration
+        { var
+        ; identifier = Ast.Identifier raw_identifier
+        ; assign = None
+        ; semicolon }
     |> Ast.Program.of_declaration
     |> Result.return )
 
@@ -32,10 +36,11 @@ let value = Token.of_token_kind ~kind:(Token_kind.Number raw_value)
 let valid_declaration_with_initialization () =
   check_parse
     (Parser.parse [var; identifier; equal; value; semicolon])
-    ( ( var
-      , Ast.Identifier raw_identifier
-      , Some (equal, Ast.Literal (Ast.Number raw_value))
-      , semicolon )
+    ( Ast.Variable_declaration
+        { var
+        ; identifier = Ast.Identifier raw_identifier
+        ; assign = Some {equal; expr = Ast.Literal (Ast.Number raw_value)}
+        ; semicolon }
     |> Ast.Program.of_declaration
     |> Result.return )
 
@@ -44,16 +49,20 @@ let plus = Token.of_token_kind ~kind:Token_kind.Plus
 let valid_declaration_with_expression () =
   check_parse
     (Parser.parse [var; identifier; equal; value; plus; value; semicolon])
-    ( ( var
-      , Ast.Identifier raw_identifier
-      , Some
-          ( equal
-          , Ast.Binary
-              ( Ast.Literal (Ast.Number 5.)
-              , { Token.kind = Token_kind.Plus
-                ; location = {Location.line = 1; column = 0} }
-              , Ast.Literal (Ast.Number 5.) ) )
-      , semicolon )
+    ( Ast.Variable_declaration
+        { var
+        ; identifier = Ast.Identifier raw_identifier
+        ; assign =
+            Some
+              { equal
+              ; expr =
+                  Ast.Binary
+                    { left_expr = Ast.Literal (Ast.Number 5.)
+                    ; operator =
+                        { Token.kind = Token_kind.Plus
+                        ; location = {Location.line = 1; column = 0} }
+                    ; right_expr = Ast.Literal (Ast.Number 5.) } }
+        ; semicolon }
     |> Ast.Program.of_declaration
     |> Result.return )
 

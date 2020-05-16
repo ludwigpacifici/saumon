@@ -21,47 +21,50 @@ let evaluate_literal () =
   check_value (evaluate (Ast.Literal Ast.Nil)) (Ok Value.Nil)
 
 let evaluate_grouping () =
-  let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
-  let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
+  let left_paren = Token.of_token_kind ~kind:Token_kind.Left_paren in
+  let right_paren = Token.of_token_kind ~kind:Token_kind.Right_paren in
   check_value
-    (evaluate (Ast.Grouping (left, Ast.Literal (Ast.Number 42.), right)))
+    (evaluate
+       (Ast.Grouping
+          {left_paren; expr = Ast.Literal (Ast.Number 42.); right_paren}))
     (Ok (Value.Number 42.))
 
 let evaluate_unary () =
   check_value
     (evaluate
        (Ast.Unary
-          ( Token.of_token_kind ~kind:Token_kind.Minus
-          , Ast.Literal (Ast.Number 42.) )))
+          { operator = Token.of_token_kind ~kind:Token_kind.Minus
+          ; expr = Ast.Literal (Ast.Number 42.) }))
     (Ok (Value.Number (-42.))) ;
   check_true
     ( evaluate
         (Ast.Unary
-           ( Token.of_token_kind ~kind:Token_kind.Minus
-           , Ast.Literal (Ast.String "42.") ))
+           { operator = Token.of_token_kind ~kind:Token_kind.Minus
+           ; expr = Ast.Literal (Ast.String "42.") })
     |> Result.is_error ) ;
   check_value
     (evaluate
        (Ast.Unary
-          ( Token.of_token_kind ~kind:Token_kind.Bang
-          , Ast.Literal (Ast.Number 42.) )))
+          { operator = Token.of_token_kind ~kind:Token_kind.Bang
+          ; expr = Ast.Literal (Ast.Number 42.) }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Unary
-          ( Token.of_token_kind ~kind:Token_kind.Bang
-          , Ast.Literal (Ast.Bool false) )))
+          { operator = Token.of_token_kind ~kind:Token_kind.Bang
+          ; expr = Ast.Literal (Ast.Bool false) }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Unary
-          (Token.of_token_kind ~kind:Token_kind.Bang, Ast.Literal Ast.Nil)))
+          { operator = Token.of_token_kind ~kind:Token_kind.Bang
+          ; expr = Ast.Literal Ast.Nil }))
     (Ok (Value.Bool true)) ;
   check_true
     ( evaluate
         (Ast.Unary
-           ( Token.of_token_kind ~kind:Token_kind.Plus
-           , Ast.Literal (Ast.Number 42.) ))
+           { operator = Token.of_token_kind ~kind:Token_kind.Plus
+           ; expr = Ast.Literal (Ast.Number 42.) })
     |> Result.is_error )
 
 let evaluate_binary () =
@@ -71,23 +74,38 @@ let evaluate_binary () =
   let n2_ast = Ast.Literal (Ast.Number n2) in
   check_value
     (evaluate
-       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Plus, n2_ast)))
+       (Ast.Binary
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Plus
+          ; right_expr = n2_ast }))
     (Ok (Value.Number (n1 +. n2))) ;
   check_value
     (evaluate
-       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Minus, n2_ast)))
+       (Ast.Binary
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Minus
+          ; right_expr = n2_ast }))
     (Ok (Value.Number (n1 -. n2))) ;
   check_value
     (evaluate
-       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Star, n2_ast)))
+       (Ast.Binary
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Star
+          ; right_expr = n2_ast }))
     (Ok (Value.Number (n1 *. n2))) ;
   check_value
     (evaluate
-       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Slash, n2_ast)))
+       (Ast.Binary
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Slash
+          ; right_expr = n2_ast }))
     (Ok (Value.Number (n1 /. n2))) ;
   check_true
     ( evaluate
-        (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Bang, n2_ast))
+        (Ast.Binary
+           { left_expr = n1_ast
+           ; operator = Token.of_token_kind ~kind:Token_kind.Bang
+           ; right_expr = n2_ast })
     |> Result.is_error ) ;
   let str1 = "hello" in
   let str2 = "world" in
@@ -96,125 +114,171 @@ let evaluate_binary () =
   check_value
     (evaluate
        (Ast.Binary
-          (str1_ast, Token.of_token_kind ~kind:Token_kind.Plus, str2_ast)))
+          { left_expr = str1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Plus
+          ; right_expr = str2_ast }))
     (Ok (Value.String (str1 ^ str2))) ;
   check_true
     ( evaluate
         (Ast.Binary
-           (str1_ast, Token.of_token_kind ~kind:Token_kind.Bang, str2_ast))
+           { left_expr = str1_ast
+           ; operator = Token.of_token_kind ~kind:Token_kind.Bang
+           ; right_expr = str2_ast })
     |> Result.is_error ) ;
   check_value
     (evaluate
-       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Less, n2_ast)))
+       (Ast.Binary
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Less
+          ; right_expr = n2_ast }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Less_equal, n2_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Less_equal
+          ; right_expr = n2_ast }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
-       (Ast.Binary (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater, n2_ast)))
+       (Ast.Binary
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Greater
+          ; right_expr = n2_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Greater_equal, n2_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Greater_equal
+          ; right_expr = n2_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, n1_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = n1_ast }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, str1_ast)))
+          { left_expr = str1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = str1_ast }))
     (Ok (Value.Bool true)) ;
   let t_ast = Ast.Literal (Ast.Bool true) in
   check_value
     (evaluate
        (Ast.Binary
-          (t_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast)))
+          { left_expr = t_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = t_ast }))
     (Ok (Value.Bool true)) ;
   let f_ast = Ast.Literal (Ast.Bool false) in
   check_value
     (evaluate
        (Ast.Binary
-          (f_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, f_ast)))
+          { left_expr = f_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = f_ast }))
     (Ok (Value.Bool true)) ;
   let nil_ast = Ast.Literal Ast.Nil in
   check_value
     (evaluate
        (Ast.Binary
-          (nil_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
+          { left_expr = nil_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = nil_ast }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, str1_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = str1_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = t_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = nil_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, t_ast)))
+          { left_expr = str1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = t_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (str1_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
+          { left_expr = str1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = nil_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (t_ast, Token.of_token_kind ~kind:Token_kind.Equal_equal, nil_ast)))
+          { left_expr = t_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Equal_equal
+          ; right_expr = nil_ast }))
     (Ok (Value.Bool false)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (n1_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, n2_ast)))
+          { left_expr = n1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Bang_equal
+          ; right_expr = n2_ast }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (str1_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, str2_ast)))
+          { left_expr = str1_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Bang_equal
+          ; right_expr = str2_ast }))
     (Ok (Value.Bool true)) ;
   check_value
     (evaluate
        (Ast.Binary
-          (t_ast, Token.of_token_kind ~kind:Token_kind.Bang_equal, f_ast)))
+          { left_expr = t_ast
+          ; operator = Token.of_token_kind ~kind:Token_kind.Bang_equal
+          ; right_expr = f_ast }))
     (Ok (Value.Bool true)) ;
   let bad_expression =
     Ast.Unary
-      ( Token.of_token_kind ~kind:Token_kind.Minus
-      , Ast.Literal (Ast.String "42.") )
+      { operator = Token.of_token_kind ~kind:Token_kind.Minus
+      ; expr = Ast.Literal (Ast.String "42.") }
   in
   check_true
     ( evaluate
         (Ast.Binary
-           (bad_expression, Token.of_token_kind ~kind:Token_kind.Plus, n2_ast))
+           { left_expr = bad_expression
+           ; operator = Token.of_token_kind ~kind:Token_kind.Plus
+           ; right_expr = n2_ast })
     |> Result.is_error ) ;
   check_true
     ( evaluate
         (Ast.Binary
-           (n1_ast, Token.of_token_kind ~kind:Token_kind.Plus, bad_expression))
+           { left_expr = n1_ast
+           ; operator = Token.of_token_kind ~kind:Token_kind.Plus
+           ; right_expr = bad_expression })
     |> Result.is_error ) ;
   check_true
     ( evaluate
         (Ast.Binary
-           ( bad_expression
-           , Token.of_token_kind ~kind:Token_kind.Plus
-           , bad_expression ))
+           { left_expr = bad_expression
+           ; operator = Token.of_token_kind ~kind:Token_kind.Plus
+           ; right_expr = bad_expression })
     |> Result.is_error )
 
 let evaluate_conditional () =
@@ -223,28 +287,44 @@ let evaluate_conditional () =
   let and_token = Token.of_token_kind ~kind:Token_kind.And in
   let or_token = Token.of_token_kind ~kind:Token_kind.Or in
   check_value
-    (evaluate (Ast.Binary (true_ast, and_token, true_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = true_ast; operator = and_token; right_expr = true_ast}))
     (Ok (Value.Bool true)) ;
   check_value
-    (evaluate (Ast.Binary (false_ast, and_token, true_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = false_ast; operator = and_token; right_expr = true_ast}))
     (Ok (Value.Bool false)) ;
   check_value
-    (evaluate (Ast.Binary (true_ast, and_token, false_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = true_ast; operator = and_token; right_expr = false_ast}))
     (Ok (Value.Bool false)) ;
   check_value
-    (evaluate (Ast.Binary (false_ast, and_token, false_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = false_ast; operator = and_token; right_expr = false_ast}))
     (Ok (Value.Bool false)) ;
   check_value
-    (evaluate (Ast.Binary (true_ast, or_token, true_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = true_ast; operator = or_token; right_expr = true_ast}))
     (Ok (Value.Bool true)) ;
   check_value
-    (evaluate (Ast.Binary (false_ast, or_token, true_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = false_ast; operator = or_token; right_expr = true_ast}))
     (Ok (Value.Bool true)) ;
   check_value
-    (evaluate (Ast.Binary (true_ast, or_token, false_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = true_ast; operator = or_token; right_expr = false_ast}))
     (Ok (Value.Bool true)) ;
   check_value
-    (evaluate (Ast.Binary (false_ast, or_token, false_ast)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = false_ast; operator = or_token; right_expr = false_ast}))
     (Ok (Value.Bool false)) ;
   (* Truethiness checked works also with not boolean values *)
   let nil = Ast.Literal Ast.Nil in
@@ -252,17 +332,38 @@ let evaluate_conditional () =
   let number_value = Value.Number 42. in
   let number = Ast.Literal (Ast.Number number_raw) in
   check_value
-    (evaluate (Ast.Binary (number, and_token, number)))
+    (evaluate
+       (Ast.Binary
+          {left_expr = number; operator = and_token; right_expr = number}))
     (Ok number_value) ;
-  check_value (evaluate (Ast.Binary (nil, and_token, number))) (Ok Value.Nil) ;
-  check_value (evaluate (Ast.Binary (number, and_token, nil))) (Ok Value.Nil) ;
-  check_value (evaluate (Ast.Binary (nil, and_token, nil))) (Ok Value.Nil) ;
   check_value
-    (evaluate (Ast.Binary (number, or_token, number)))
+    (evaluate
+       (Ast.Binary {left_expr = nil; operator = and_token; right_expr = number}))
+    (Ok Value.Nil) ;
+  check_value
+    (evaluate
+       (Ast.Binary {left_expr = number; operator = and_token; right_expr = nil}))
+    (Ok Value.Nil) ;
+  check_value
+    (evaluate
+       (Ast.Binary {left_expr = nil; operator = and_token; right_expr = nil}))
+    (Ok Value.Nil) ;
+  check_value
+    (evaluate
+       (Ast.Binary {left_expr = number; operator = or_token; right_expr = number}))
     (Ok number_value) ;
-  check_value (evaluate (Ast.Binary (nil, or_token, number))) (Ok number_value) ;
-  check_value (evaluate (Ast.Binary (number, or_token, nil))) (Ok number_value) ;
-  check_value (evaluate (Ast.Binary (nil, or_token, nil))) (Ok Value.Nil)
+  check_value
+    (evaluate
+       (Ast.Binary {left_expr = nil; operator = or_token; right_expr = number}))
+    (Ok number_value) ;
+  check_value
+    (evaluate
+       (Ast.Binary {left_expr = number; operator = or_token; right_expr = nil}))
+    (Ok number_value) ;
+  check_value
+    (evaluate
+       (Ast.Binary {left_expr = nil; operator = or_token; right_expr = nil}))
+    (Ok Value.Nil)
 
 let all =
   [ Alcotest.test_case "Evaluate literal" `Quick evaluate_literal

@@ -14,7 +14,7 @@ let right_brace = Token.of_token_kind ~kind:Token_kind.Right_brace
 let empty_block () =
   check_parse
     (Parser.parse [left_brace; right_brace])
-    (Ast.Block [] |> Ast.Program.of_statement |> Result.return)
+    (Ast.Block {statements = []} |> Ast.Program.of_statement |> Result.return)
 
 let not_closed_block () =
   check_true (Parser.parse [left_brace] |> Result.is_error)
@@ -34,9 +34,12 @@ let block_with_several_statements () =
        ; semicolon
        ; right_brace ])
     ( Ast.Block
-        [ Ast.Statement (Ast.Expression_statement (Ast.Literal Ast.Nil))
-        ; Ast.Statement
-            (Ast.Expression_statement (Ast.Literal (Ast.Number raw_value))) ]
+        { statements =
+            [ Ast.Statement
+                (Ast.Expression_statement {expr = Ast.Literal Ast.Nil})
+            ; Ast.Statement
+                (Ast.Expression_statement
+                   {expr = Ast.Literal (Ast.Number raw_value)}) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 

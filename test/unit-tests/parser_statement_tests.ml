@@ -29,7 +29,7 @@ let error_when_semicolon () =
 let valid_expression_statement () =
   check_parse
     (Parser.parse [Token.of_token_kind ~kind:Token_kind.Nil; semicolon])
-    ( Ast.Expression_statement (Ast.Literal Ast.Nil)
+    ( Ast.Expression_statement {expr = Ast.Literal Ast.Nil}
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -42,7 +42,7 @@ let print = Token.of_token_kind ~kind:Token_kind.Print
 let valid_print_statement () =
   check_parse
     (Parser.parse [print; Token.of_token_kind ~kind:Token_kind.Nil; semicolon])
-    ( Ast.Print_statement (Ast.Literal Ast.Nil)
+    ( Ast.Print_statement {expr = Ast.Literal Ast.Nil}
     |> Ast.Program.of_statement
     |> Result.return )
 

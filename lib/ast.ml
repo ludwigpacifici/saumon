@@ -1,74 +1,58 @@
 (* Lox Grammar : http://www.craftinginterpreters.com/appendix-i.html *)
-
-type expression =
-  | Assignment of assignment
-  | Binary of binary
-  | Grouping of grouping
-  | Literal of literal
-  | Unary of unary
-
-and literal =
+type literal =
   | Bool of bool
   | Identifier of string
   | Nil
   | Number of float
   | String of string
-
-and unary = Token.t * expression
-
-and binary = expression * Token.t * expression
-
-and grouping = Token.t * expression * Token.t
-
-(* TODO: remove all the Token.t that should be set to a constant value. They do
-   not have added value, plus it makes rewritting the AST harder. *)
-and assignment =
-  literal (* Constantly equal to token_kind.Identifier *)
-  * Token.t (* Constantly equal to Identifier *)
-  * expression
 [@@deriving show, eq]
 
-type expression_statement = expression [@@deriving show, eq]
-
-type print_statement = expression [@@deriving show, eq]
+type expression =
+  | Assignment of
+      { identifier : literal
+      ; equal : Token.t
+      ; expr : expression }
+  | Binary of
+      { left_expr : expression
+      ; operator : Token.t
+      ; right_expr : expression }
+  | Grouping of
+      { left_paren : Token.t
+      ; expr : expression
+      ; right_paren : Token.t }
+  | Literal of literal
+  | Unary of
+      { operator : Token.t
+      ; expr : expression }
+[@@deriving show, eq]
 
 type variable_declaration =
-  Token.t (* Constantly equal to token_kind.Var, i.e. "var" *)
-  * literal (* literal is of type identifier *)
-  * ( Token.t
-      (* Constantly equal to token_kind.Equal, i.e. "=" and an expression *)
-    * expression )
-    option
-  * (* Constantly equal to token_kind.Semicolon , i.e. ";" *)
-    Token.t
+  { var : Token.t
+  ; identifier : literal
+  ; assign : declaration_assign option
+  ; semicolon : Token.t }
+
+and declaration_assign =
+  { equal : Token.t
+  ; expr : expression }
 [@@deriving show, eq]
 
 type declaration =
   | Statement of statement
   | Variable_declaration of variable_declaration
+[@@deriving show, eq]
 
 and statement =
-  | Block of block
-  | Expression_statement of expression_statement
-  | If_statement of if_statement
-  | Print_statement of print_statement
-  | While_statement of while_statement
-
-and block = declaration list
-
-and if_statement =
-  Token.t (* Constantly equal to token_kind.If *)
-  * Token.t (* Constantly equal to token_kind.Left_paren *)
-  * expression
-  * Token.t (* Constantly equal to token_kind.Right_paren *)
-  * statement
-  * (Token.t (* Constantly equal to token_kind.Else *) * statement) option
-
-and while_statement =
-  expression
-  (* If evaluated to true then run the while body otherwise stop the while loop *)
-  * statement
-(* Body of the while loop *)
+  | Block of {statements : declaration list}
+  | Expression_statement of {expr : expression}
+  | If_statement of
+      { condition : expression
+      ; if_body : statement
+      ; else_body : statement option }
+  | Print_statement of {expr : expression}
+  | While_statement of
+      { condition : expression
+      ; body : statement }
 [@@deriving show, eq]
 
 module Program = struct
@@ -80,8 +64,7 @@ module Program = struct
 
   let of_statement (x : statement) : t = [Statement x] |> return
 
-  let of_declaration (x : variable_declaration) : t =
-    [Variable_declaration x] |> return
+  let of_declaration (x : declaration) : t = [x] |> return
 
   let get (Program p) : declaration list = p
 end

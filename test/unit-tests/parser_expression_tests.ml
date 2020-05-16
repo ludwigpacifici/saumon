@@ -17,7 +17,7 @@ let parse_with_semicolon ts =
 let assert_parse ts expected_expression =
   check_parse (parse_with_semicolon ts)
     ( expected_expression
-    |> (fun e -> Ast.Expression_statement e)
+    |> (fun expr -> Ast.Expression_statement {expr})
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -50,11 +50,13 @@ let expression_is_identifier x () =
   assert_parse [Token.of_token_kind ~kind:(Token_kind.Identifier x)] expression
 
 let expression_is_grouping () =
-  let left = Token.of_token_kind ~kind:Token_kind.Left_paren in
-  let right = Token.of_token_kind ~kind:Token_kind.Right_paren in
-  let expression = Ast.Grouping (left, Ast.Literal (Ast.Bool true), right) in
+  let left_paren = Token.of_token_kind ~kind:Token_kind.Left_paren in
+  let right_paren = Token.of_token_kind ~kind:Token_kind.Right_paren in
+  let expression =
+    Ast.Grouping {left_paren; expr = Ast.Literal (Ast.Bool true); right_paren}
+  in
   assert_parse
-    [left; Token.of_token_kind ~kind:Token_kind.True; right]
+    [left_paren; Token.of_token_kind ~kind:Token_kind.True; right_paren]
     expression
 
 let expression_grouping_bad_closed_paren () =
@@ -70,12 +72,16 @@ let expression_is_illegal () =
 
 let expression_is_bang_unary () =
   let bang = Token.of_token_kind ~kind:Token_kind.Bang in
-  let expression = Ast.Unary (bang, Ast.Literal (Ast.Bool true)) in
+  let expression =
+    Ast.Unary {operator = bang; expr = Ast.Literal (Ast.Bool true)}
+  in
   assert_parse [bang; Token.of_token_kind ~kind:Token_kind.True] expression
 
 let expression_is_minus_number n () =
   let minus = Token.of_token_kind ~kind:Token_kind.Minus in
-  let expression = Ast.Unary (minus, Ast.Literal (Ast.Number n)) in
+  let expression =
+    Ast.Unary {operator = minus; expr = Ast.Literal (Ast.Number n)}
+  in
   assert_parse
     [minus; Token.of_token_kind ~kind:(Token_kind.Number n)]
     expression
@@ -83,7 +89,10 @@ let expression_is_minus_number n () =
 let multiplication_of_two_numbers n () =
   let infix = Token.of_token_kind ~kind:Token_kind.Star in
   let expression =
-    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+    Ast.Binary
+      { left_expr = Ast.Literal (Ast.Number n)
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
@@ -96,17 +105,23 @@ let division_of_three_numbers () =
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Binary
-      ( Ast.Binary
-          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
-      , infix
-      , Ast.Literal (Ast.Number 3.) )
+      { left_expr =
+          Ast.Binary
+            { left_expr = Ast.Literal (Ast.Number 1.)
+            ; operator = infix
+            ; right_expr = Ast.Literal (Ast.Number 2.) }
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number 3.) }
   in
   assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let addition_of_two_numbers n () =
   let infix = Token.of_token_kind ~kind:Token_kind.Plus in
   let expression =
-    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+    Ast.Binary
+      { left_expr = Ast.Literal (Ast.Number n)
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
@@ -119,17 +134,23 @@ let substract_three_numbers () =
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Binary
-      ( Ast.Binary
-          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
-      , infix
-      , Ast.Literal (Ast.Number 3.) )
+      { left_expr =
+          Ast.Binary
+            { left_expr = Ast.Literal (Ast.Number 1.)
+            ; operator = infix
+            ; right_expr = Ast.Literal (Ast.Number 2.) }
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number 3.) }
   in
   assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let comparison_of_two_numbers n () =
   let infix = Token.of_token_kind ~kind:Token_kind.Greater in
   let expression =
-    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+    Ast.Binary
+      { left_expr = Ast.Literal (Ast.Number n)
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
@@ -142,17 +163,23 @@ let comparison_three_numbers () =
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Binary
-      ( Ast.Binary
-          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
-      , infix
-      , Ast.Literal (Ast.Number 3.) )
+      { left_expr =
+          Ast.Binary
+            { left_expr = Ast.Literal (Ast.Number 1.)
+            ; operator = infix
+            ; right_expr = Ast.Literal (Ast.Number 2.) }
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number 3.) }
   in
   assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
 let equality_of_two_numbers n () =
   let infix = Token.of_token_kind ~kind:Token_kind.Equal_equal in
   let expression =
-    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+    Ast.Binary
+      { left_expr = Ast.Literal (Ast.Number n)
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
@@ -165,10 +192,13 @@ let equality_three_numbers () =
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Binary
-      ( Ast.Binary
-          (Ast.Literal (Ast.Number 1.), infix, Ast.Literal (Ast.Number 2.))
-      , infix
-      , Ast.Literal (Ast.Number 3.) )
+      { left_expr =
+          Ast.Binary
+            { left_expr = Ast.Literal (Ast.Number 1.)
+            ; operator = infix
+            ; right_expr = Ast.Literal (Ast.Number 2.) }
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number 3.) }
   in
   assert_parse [number 1.; infix; number 2.; infix; number 3.] expression
 
@@ -181,7 +211,9 @@ let assign_a_number n () =
   let number = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Assignment
-      (Ast.Identifier raw_identifier, equal, Ast.Literal (Ast.Number n))
+      { identifier = Ast.Identifier raw_identifier
+      ; equal
+      ; expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse [identifier; equal; number] expression
 
@@ -194,10 +226,13 @@ let nested_assignments n () =
   let number = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Assignment
-      ( Ast.Identifier raw_identifier
-      , equal
-      , Ast.Assignment
-          (Ast.Identifier raw_identifier, equal, Ast.Literal (Ast.Number n)) )
+      { identifier = Ast.Identifier raw_identifier
+      ; equal
+      ; expr =
+          Ast.Assignment
+            { identifier = Ast.Identifier raw_identifier
+            ; equal
+            ; expr = Ast.Literal (Ast.Number n) } }
   in
   assert_parse [identifier; equal; identifier; equal; number] expression
 
@@ -218,7 +253,10 @@ let assign_with_invalid_lhs () =
 let logic_or_of_two_numbers (n : float) () =
   let infix = Token.of_token_kind ~kind:Token_kind.Or in
   let expression =
-    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+    Ast.Binary
+      { left_expr = Ast.Literal (Ast.Number n)
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
@@ -229,7 +267,10 @@ let logic_or_of_two_numbers (n : float) () =
 let logic_and_of_two_numbers (n : float) () =
   let infix = Token.of_token_kind ~kind:Token_kind.And in
   let expression =
-    Ast.Binary (Ast.Literal (Ast.Number n), infix, Ast.Literal (Ast.Number n))
+    Ast.Binary
+      { left_expr = Ast.Literal (Ast.Number n)
+      ; operator = infix
+      ; right_expr = Ast.Literal (Ast.Number n) }
   in
   assert_parse
     [ Token.of_token_kind ~kind:(Token_kind.Number n)
@@ -243,10 +284,13 @@ let logic_and_precedence_over_or_left () =
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Binary
-      ( Ast.Binary
-          (Ast.Literal (Ast.Number 1.), and_token, Ast.Literal (Ast.Number 2.))
-      , or_token
-      , Ast.Literal (Ast.Number 3.) )
+      { left_expr =
+          Ast.Binary
+            { left_expr = Ast.Literal (Ast.Number 1.)
+            ; operator = and_token
+            ; right_expr = Ast.Literal (Ast.Number 2.) }
+      ; operator = or_token
+      ; right_expr = Ast.Literal (Ast.Number 3.) }
   in
   (* Logical and precedence is on the left of the or *)
   assert_parse [number 1.; and_token; number 2.; or_token; number 3.] expression
@@ -257,11 +301,13 @@ let logic_and_precedence_over_or_right () =
   let number n = Token.of_token_kind ~kind:(Token_kind.Number n) in
   let expression =
     Ast.Binary
-      ( Ast.Literal (Ast.Number 1.)
-      , or_token
-      , Ast.Binary
-          (Ast.Literal (Ast.Number 2.), and_token, Ast.Literal (Ast.Number 3.))
-      )
+      { left_expr = Ast.Literal (Ast.Number 1.)
+      ; operator = or_token
+      ; right_expr =
+          Ast.Binary
+            { left_expr = Ast.Literal (Ast.Number 2.)
+            ; operator = and_token
+            ; right_expr = Ast.Literal (Ast.Number 3.) } }
   in
   (* Logical and precedence is on the right of the or *)
   assert_parse [number 1.; or_token; number 2.; and_token; number 3.] expression
