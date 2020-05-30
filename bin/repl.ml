@@ -11,9 +11,7 @@ let ps1 elapsed errored counter exe_name =
     ^ " ┃"
   in
   let l2 = "┗ " ^ exe_name ^ " ><> " in
-  Out_channel.print_endline l1 ;
-  Out_channel.print_string l2 ;
-  Out_channel.flush stdout
+  Out_channel.print_endline l1 ; Out_channel.print_string l2 ; Out_channel.flush stdout
 
 let run exe_name args in_channel =
   let zero_time_span = Time_ns.Span.of_ns 0. in

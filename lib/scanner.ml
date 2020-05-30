@@ -5,202 +5,73 @@ type error =
   ; message : string }
 [@@deriving show, eq]
 
-let is_word_end = function
-  | [] -> true
-  | c :: _ when Char.is_alphanum c -> false
-  | _ -> true
+let is_word_end = function [] -> true | c :: _ when Char.is_alphanum c -> false | _ -> true
 
 let make_add_token kind location tokens = Token.make ~kind ~location :: tokens
 
 let rec loop location tokens = function
   | [] ->
-      tokens
-      |> Result.map ~f:(make_add_token Eof location)
-      |> Result.map ~f:List.rev
-      |> Result.map_error ~f:List.rev
-  | '(' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Left_paren location))
-        tl
-  | ')' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Right_paren location))
-        tl
-  | '{' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Left_brace location))
-        tl
-  | '}' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Right_brace location))
-        tl
-  | ',' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Comma location))
-        tl
-  | '.' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Dot location))
-        tl
-  | '-' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Minus location))
-        tl
-  | '+' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Plus location))
-        tl
-  | ';' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Semicolon location))
-        tl
+      tokens |> Result.map ~f:(make_add_token Eof location) |> Result.map ~f:List.rev |> Result.map_error ~f:List.rev
+  | '(' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Left_paren location)) tl
+  | ')' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Right_paren location)) tl
+  | '{' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Left_brace location)) tl
+  | '}' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Right_brace location)) tl
+  | ',' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Comma location)) tl
+  | '.' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Dot location)) tl
+  | '-' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Minus location)) tl
+  | '+' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Plus location)) tl
+  | ';' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Semicolon location)) tl
   | '/' :: '/' :: tl ->
       (* Discard data up to the end of the line or EOF *)
-      List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl
-      |> snd
-      |> loop location tokens
-  | '/' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Slash location))
-        tl
-  | '*' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Star location))
-        tl
+      List.split_while ~f:(fun c -> Char.compare '\n' c <> 0) tl |> snd |> loop location tokens
+  | '/' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Slash location)) tl
+  | '*' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Star location)) tl
   | '!' :: '=' :: tl ->
-      loop
-        (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Bang_equal location))
-        tl
-  | '!' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Bang location))
-        tl
+      loop (Location.next_column location 2) (Result.map tokens ~f:(make_add_token Bang_equal location)) tl
+  | '!' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Bang location)) tl
   | '=' :: '=' :: tl ->
-      loop
-        (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Equal_equal location))
-        tl
-  | '=' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Equal location))
-        tl
+      loop (Location.next_column location 2) (Result.map tokens ~f:(make_add_token Equal_equal location)) tl
+  | '=' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Equal location)) tl
   | '<' :: '=' :: tl ->
-      loop
-        (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Less_equal location))
-        tl
-  | '<' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Less location))
-        tl
+      loop (Location.next_column location 2) (Result.map tokens ~f:(make_add_token Less_equal location)) tl
+  | '<' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Less location)) tl
   | '>' :: '=' :: tl ->
-      loop
-        (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Greater_equal location))
-        tl
-  | '>' :: tl ->
-      loop
-        (Location.next_column location 1)
-        (Result.map tokens ~f:(make_add_token Greater location))
-        tl
+      loop (Location.next_column location 2) (Result.map tokens ~f:(make_add_token Greater_equal location)) tl
+  | '>' :: tl -> loop (Location.next_column location 1) (Result.map tokens ~f:(make_add_token Greater location)) tl
   | 'a' :: 'n' :: 'd' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 3)
-        (Result.map tokens ~f:(make_add_token And location))
-        tl
+      loop (Location.next_column location 3) (Result.map tokens ~f:(make_add_token And location)) tl
   | 'c' :: 'l' :: 'a' :: 's' :: 's' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 5)
-        (Result.map tokens ~f:(make_add_token Class location))
-        tl
+      loop (Location.next_column location 5) (Result.map tokens ~f:(make_add_token Class location)) tl
   | 'e' :: 'l' :: 's' :: 'e' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 4)
-        (Result.map tokens ~f:(make_add_token Else location))
-        tl
+      loop (Location.next_column location 4) (Result.map tokens ~f:(make_add_token Else location)) tl
   | 'f' :: 'a' :: 'l' :: 's' :: 'e' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 5)
-        (Result.map tokens ~f:(make_add_token False location))
-        tl
+      loop (Location.next_column location 5) (Result.map tokens ~f:(make_add_token False location)) tl
   | 'f' :: 'u' :: 'n' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 3)
-        (Result.map tokens ~f:(make_add_token Fun location))
-        tl
+      loop (Location.next_column location 3) (Result.map tokens ~f:(make_add_token Fun location)) tl
   | 'f' :: 'o' :: 'r' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 3)
-        (Result.map tokens ~f:(make_add_token For location))
-        tl
+      loop (Location.next_column location 3) (Result.map tokens ~f:(make_add_token For location)) tl
   | 'i' :: 'f' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token If location))
-        tl
+      loop (Location.next_column location 2) (Result.map tokens ~f:(make_add_token If location)) tl
   | 'n' :: 'i' :: 'l' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 3)
-        (Result.map tokens ~f:(make_add_token Nil location))
-        tl
+      loop (Location.next_column location 3) (Result.map tokens ~f:(make_add_token Nil location)) tl
   | 'o' :: 'r' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 2)
-        (Result.map tokens ~f:(make_add_token Or location))
-        tl
+      loop (Location.next_column location 2) (Result.map tokens ~f:(make_add_token Or location)) tl
   | 'p' :: 'r' :: 'i' :: 'n' :: 't' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 5)
-        (Result.map tokens ~f:(make_add_token Print location))
-        tl
+      loop (Location.next_column location 5) (Result.map tokens ~f:(make_add_token Print location)) tl
   | 'r' :: 'e' :: 't' :: 'u' :: 'r' :: 'n' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 6)
-        (Result.map tokens ~f:(make_add_token Return location))
-        tl
+      loop (Location.next_column location 6) (Result.map tokens ~f:(make_add_token Return location)) tl
   | 's' :: 'u' :: 'p' :: 'e' :: 'r' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 5)
-        (Result.map tokens ~f:(make_add_token Super location))
-        tl
+      loop (Location.next_column location 5) (Result.map tokens ~f:(make_add_token Super location)) tl
   | 't' :: 'h' :: 'i' :: 's' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 4)
-        (Result.map tokens ~f:(make_add_token This location))
-        tl
+      loop (Location.next_column location 4) (Result.map tokens ~f:(make_add_token This location)) tl
   | 't' :: 'r' :: 'u' :: 'e' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 4)
-        (Result.map tokens ~f:(make_add_token True location))
-        tl
+      loop (Location.next_column location 4) (Result.map tokens ~f:(make_add_token True location)) tl
   | 'v' :: 'a' :: 'r' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 3)
-        (Result.map tokens ~f:(make_add_token Var location))
-        tl
+      loop (Location.next_column location 3) (Result.map tokens ~f:(make_add_token Var location)) tl
   | 'w' :: 'h' :: 'i' :: 'l' :: 'e' :: tl when is_word_end tl ->
-      loop
-        (Location.next_column location 5)
-        (Result.map tokens ~f:(make_add_token While location))
-        tl
+      loop (Location.next_column location 5) (Result.map tokens ~f:(make_add_token While location)) tl
   | '\n' :: tl -> loop (Location.next_line location) tokens tl
-  | c :: tl when Char.is_whitespace c ->
-      loop (Location.next_column location 1) tokens tl
+  | c :: tl when Char.is_whitespace c -> loop (Location.next_column location 1) tokens tl
   | c :: _ as tl when Char.is_alpha c ->
       let identifier, tl = List.split_while ~f:Char.is_alphanum tl in
       let identifier = String.of_char_list identifier in
@@ -219,29 +90,16 @@ let rec loop location tokens = function
         (* Discard the 2nd '"' *)
         (match tl with [] -> [] | _ :: tl -> tl)
   | c :: _ as tl when Char.is_digit c ->
-      let raw_number, tl =
-        List.split_while ~f:(fun c -> Char.is_digit c || Char.equal '.' c) tl
-      in
+      let raw_number, tl = List.split_while ~f:(fun c -> Char.is_digit c || Char.equal '.' c) tl in
       let raw_number = String.of_char_list raw_number in
       let len = String.length raw_number in
       let token =
-        ( try Ok (Float.of_string raw_number)
-          with _ -> Error [{location; message = "Expected to parse a float."}]
-        )
-        |> Result.map ~f:(fun n ->
-               Token.make ~kind:(Token_kind.Number n) ~location)
+        (try Ok (Float.of_string raw_number) with _ -> Error [{location; message = "Expected to parse a float."}])
+        |> Result.map ~f:(fun n -> Token.make ~kind:(Token_kind.Number n) ~location)
       in
-      loop
-        (Location.next_column location len)
-        (Result.combine token tokens ~ok:List.cons ~err:List.append)
-        tl
+      loop (Location.next_column location len) (Result.combine token tokens ~ok:List.cons ~err:List.append) tl
   | c :: tl ->
-      let err =
-        Error [{location; message = "Unknown input: " ^ String.of_char c}]
-      in
-      loop
-        (Location.next_column location 1)
-        (Result.combine err tokens ~ok:List.cons ~err:List.append)
-        tl
+      let err = Error [{location; message = "Unknown input: " ^ String.of_char c}] in
+      loop (Location.next_column location 1) (Result.combine err tokens ~ok:List.cons ~err:List.append) tl
 
 let scan_tokens code = loop (Location.start ()) (Ok []) (String.to_list code)

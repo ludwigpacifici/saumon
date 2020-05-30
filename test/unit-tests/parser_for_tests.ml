@@ -4,8 +4,7 @@ module A = Alcotest_testable
 
 let check_true = Alcotest.(check bool) "check Parser.parse" true
 
-let check_parse =
-  Alcotest.(check (result A.ast_program string)) "check Parser.parse"
+let check_parse = Alcotest.(check (result A.ast_program string)) "check Parser.parse"
 
 let left_paren = Token.of_token_kind ~kind:Token_kind.Left_paren
 
@@ -27,8 +26,7 @@ let semicolon = Token.of_token_kind ~kind:Token_kind.Semicolon
 
 let raw_identifier = "i"
 
-let identifier =
-  Token.of_token_kind ~kind:(Token_kind.Identifier raw_identifier)
+let identifier = Token.of_token_kind ~kind:(Token_kind.Identifier raw_identifier)
 
 let zero = Token.of_token_kind ~kind:(Token_kind.Number 0.)
 
@@ -75,35 +73,24 @@ let valid_for () =
                 (Ast.While_statement
                    { condition =
                        Ast.Binary
-                         { left_expr =
-                             Ast.Literal (Ast.Identifier raw_identifier)
+                         { left_expr = Ast.Literal (Ast.Identifier raw_identifier)
                          ; operator = less
                          ; right_expr = Ast.Literal (Ast.Number 3.) }
                    ; body =
                        Ast.Block
                          { statements =
-                             [ Ast.Statement
-                                 (Ast.Print_statement
-                                    { expr =
-                                        Ast.Literal
-                                          (Ast.Identifier raw_identifier) })
+                             [ Ast.Statement (Ast.Print_statement {expr = Ast.Literal (Ast.Identifier raw_identifier)})
                              ; Ast.Statement
                                  (Ast.Expression_statement
                                     { expr =
                                         Ast.Assignment
-                                          { identifier =
-                                              Ast.Identifier raw_identifier
+                                          { identifier = Ast.Identifier raw_identifier
                                           ; equal
                                           ; expr =
                                               Ast.Binary
-                                                { left_expr =
-                                                    Ast.Literal
-                                                      (Ast.Identifier
-                                                         raw_identifier)
+                                                { left_expr = Ast.Literal (Ast.Identifier raw_identifier)
                                                 ; operator = plus
-                                                ; right_expr =
-                                                    Ast.Literal (Ast.Number 1.)
-                                                } } }) ] } }) ] }
+                                                ; right_expr = Ast.Literal (Ast.Number 1.) } } }) ] } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -141,28 +128,18 @@ let valid_for_without_exit_condition () =
                    ; body =
                        Ast.Block
                          { statements =
-                             [ Ast.Statement
-                                 (Ast.Print_statement
-                                    { expr =
-                                        Ast.Literal
-                                          (Ast.Identifier raw_identifier) })
+                             [ Ast.Statement (Ast.Print_statement {expr = Ast.Literal (Ast.Identifier raw_identifier)})
                              ; Ast.Statement
                                  (Ast.Expression_statement
                                     { expr =
                                         Ast.Assignment
-                                          { identifier =
-                                              Ast.Identifier raw_identifier
+                                          { identifier = Ast.Identifier raw_identifier
                                           ; equal
                                           ; expr =
                                               Ast.Binary
-                                                { left_expr =
-                                                    Ast.Literal
-                                                      (Ast.Identifier
-                                                         raw_identifier)
+                                                { left_expr = Ast.Literal (Ast.Identifier raw_identifier)
                                                 ; operator = plus
-                                                ; right_expr =
-                                                    Ast.Literal (Ast.Number 1.)
-                                                } } }) ] } }) ] }
+                                                ; right_expr = Ast.Literal (Ast.Number 1.) } } }) ] } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 
@@ -196,18 +173,13 @@ let valid_for_without_increment () =
                 (Ast.While_statement
                    { condition =
                        Ast.Binary
-                         { left_expr =
-                             Ast.Literal (Ast.Identifier raw_identifier)
+                         { left_expr = Ast.Literal (Ast.Identifier raw_identifier)
                          ; operator = less
                          ; right_expr = Ast.Literal (Ast.Number 3.) }
                    ; body =
                        Ast.Block
                          { statements =
-                             [ Ast.Statement
-                                 (Ast.Print_statement
-                                    { expr =
-                                        Ast.Literal
-                                          (Ast.Identifier raw_identifier) }) ]
+                             [Ast.Statement (Ast.Print_statement {expr = Ast.Literal (Ast.Identifier raw_identifier)})]
                          } }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
@@ -216,78 +188,51 @@ let valid_for_minimal () =
   check_parse
     (Parser.parse
        (* for ( nil; ; ) nil; *)
-       [ for_token
-       ; left_paren
-       ; nil
-       ; semicolon
-       ; semicolon
-       ; right_paren
-       ; nil
-       ; semicolon ])
+       [for_token; left_paren; nil; semicolon; semicolon; right_paren; nil; semicolon])
     ( Ast.Block
         { statements =
-            [ Ast.Statement
-                (Ast.Expression_statement {expr = Ast.Literal Ast.Nil})
+            [ Ast.Statement (Ast.Expression_statement {expr = Ast.Literal Ast.Nil})
             ; Ast.Statement
                 (Ast.While_statement
                    { condition = Ast.Literal (Ast.Bool true)
                    ; body =
-                       Ast.Block
-                         { statements =
-                             [ Ast.Statement
-                                 (Ast.Expression_statement
-                                    {expr = Ast.Literal Ast.Nil}) ] } }) ] }
+                       Ast.Block {statements = [Ast.Statement (Ast.Expression_statement {expr = Ast.Literal Ast.Nil})]}
+                   }) ] }
     |> Ast.Program.of_statement
     |> Result.return )
 
 let missing_for_token () =
   check_true
-    ( Parser.parse
-        (* ( nil ; ; ) nil; *)
-        [left_paren; nil; semicolon; semicolon; right_paren; nil; semicolon]
+    ( Parser.parse (* ( nil ; ; ) nil; *) [left_paren; nil; semicolon; semicolon; right_paren; nil; semicolon]
     |> Result.is_error )
 
 let missing_left_paren () =
   check_true
-    ( Parser.parse
-        (* for nil ; ; ) nil; *)
-        [for_token; nil; semicolon; semicolon; right_paren; nil; semicolon]
+    ( Parser.parse (* for nil ; ; ) nil; *) [for_token; nil; semicolon; semicolon; right_paren; nil; semicolon]
     |> Result.is_error )
 
 let missing_one_semicolon () =
   check_true
-    ( Parser.parse
-        (* for ( nil ; ) nil; *)
-        [for_token; left_paren; nil; semicolon; right_paren; nil; semicolon]
+    ( Parser.parse (* for ( nil ; ) nil; *) [for_token; left_paren; nil; semicolon; right_paren; nil; semicolon]
     |> Result.is_error )
 
 let missing_two_semicolons () =
   check_true
-    ( Parser.parse
-        (* for ( nil ) nil; *)
-        [for_token; left_paren; nil; right_paren; nil; semicolon]
-    |> Result.is_error )
+    (Parser.parse (* for ( nil ) nil; *) [for_token; left_paren; nil; right_paren; nil; semicolon] |> Result.is_error)
 
 let missing_right_paren () =
   check_true
-    ( Parser.parse
-        (* for ( nil; ; nil; *)
-        [for_token; left_paren; nil; semicolon; semicolon; nil; semicolon]
+    ( Parser.parse (* for ( nil; ; nil; *) [for_token; left_paren; nil; semicolon; semicolon; nil; semicolon]
     |> Result.is_error )
 
 let missing_body () =
   check_true
-    ( Parser.parse
-        (* for nil; ; ) *)
-        [for_token; left_paren; nil; semicolon; semicolon; right_paren]
-    |> Result.is_error )
+    (Parser.parse (* for nil; ; ) *) [for_token; left_paren; nil; semicolon; semicolon; right_paren] |> Result.is_error)
 
 let all =
   [ Alcotest.test_case "Valid for" `Quick valid_for
-  ; Alcotest.test_case "Valid for without exit condition" `Quick
-      valid_for_without_exit_condition
-  ; Alcotest.test_case "Valid for without increment" `Quick
-      valid_for_without_increment
+  ; Alcotest.test_case "Valid for without exit condition" `Quick valid_for_without_exit_condition
+  ; Alcotest.test_case "Valid for without increment" `Quick valid_for_without_increment
   ; Alcotest.test_case "Valid for minimal" `Quick valid_for_minimal
   ; Alcotest.test_case "Missilg for token" `Quick missing_for_token
   ; Alcotest.test_case "Missing left paren" `Quick missing_left_paren
