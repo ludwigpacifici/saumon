@@ -1,11 +1,1 @@
-break-cases = fit
-break-fun-decl = fit-or-vertical
-break-fun-sig = fit-or-vertical
-break-infix = fit-or-vertical
-doc-comments = before
-field-space = loose
-margin = 120
-parse-docstrings = true
-profile = ocamlformat
-type-decl = sparse
-wrap-comments = true
+profile = compact
